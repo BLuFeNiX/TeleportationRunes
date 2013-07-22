@@ -1,3 +1,7 @@
 name: TeleportationRunes
-main: net.blufenix.TeleportationRunes.TeleportationRunes
+main: net.blufenix.teleportationrunes.TeleportationRunes
 version: 0.1
+commands:
+   tr:
+      description: Show information about Runes.
+      usage: /<command>

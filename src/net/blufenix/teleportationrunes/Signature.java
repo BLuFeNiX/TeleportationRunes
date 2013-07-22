@@ -1,10 +1,16 @@
-package net.blufenix.TeleportationRunes;
+package net.blufenix.teleportationrunes;
+
+import java.io.Serializable;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.bukkit.Location;
 
-public class Signature {
+public class Signature implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8365784548207556928L;
 	int northBlock;
 	int southBlock;
 	int eastBlock;
