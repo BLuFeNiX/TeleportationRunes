@@ -7,10 +7,8 @@ import org.bukkit.Server;
 
 public class LocationWrapper implements Serializable{
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 3605072683155274382L;
+	
 	String world;
 	double x;
 	double y;

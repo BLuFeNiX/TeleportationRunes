@@ -1,2 +1,6 @@
 TeleportationRunes:
   enabled: true
+  distancePerExp: 10
+  
+  altitudeMultiplier:
+    enabled: false

@@ -7,10 +7,10 @@ import java.util.Map.Entry;
 
 import net.blufenix.common.Serializer;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -78,41 +78,61 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    			if (Signature.getSignatureFromLocation(waypointLocation.getLoc()).equals(sig)) { // make sure the signature hasn't changed
 	    				
 	    				int currentExp = getTotalExp(player);
-	    				double distance = waypointLocation.getLoc().distance(blockClicked.getLocation());
-	    				int fee = (int) (Math.ceil(distance/10));
+	    				
+	    				double distance;
+	    				try {
+	    					distance = waypointLocation.getLoc().distance(blockClicked.getLocation());
+	    				}
+	    				catch (IllegalArgumentException iae) {
+	    					distance = Double.POSITIVE_INFINITY;
+	    				}
+	    				
+	    				int distancePerExp = this.getConfig().getInt("TeleportationRunes.distancePerExp");
+	    				
+	    				int fee = (int) (Math.ceil(distance/distancePerExp));
+	    				if (this.getConfig().getBoolean("TeleportationRunes.altitudeMultiplier.enabled")) {
+	    					double altitudeDelta = Math.abs(waypointLocation.getLoc().getBlockY() - blockClicked.getLocation().getBlockY());
+	    					fee = (int) (fee * (1 + altitudeDelta/100));
+	    				}
+	    				
 	    				if (currentExp >= fee) {
 	    					player.setLevel(0);
 		    				player.setExp(0);
 		    				player.giveExp(currentExp-fee);
 		    				
+		    				Location playerLoc = player.getLocation();
 		    				Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
-		    				player.getWorld().playEffect(player.getLocation(), Effect.MOBSPAWNER_FLAMES, 0);
+		    				player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
 		    				player.teleport(adjustedLoc); 
 		    				player.getWorld().strikeLightningEffect(adjustedLoc);
 		    				
-		    				player.sendMessage("§aTeleportation successful!");
-		    				player.sendMessage("§aYou traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
+		    				this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
+		    				player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
+		    				player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
+	    				}
+	    				else if (distance == Double.POSITIVE_INFINITY) {
+	    					player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
 	    				}
 	    				else {
-	    					player.sendMessage("§cYou do not have enough experience to use this teleporter.");
-	    					player.sendMessage("§cYour Exp: "+currentExp);
-	    					player.sendMessage("§cExp needed: "+fee);
-	    					player.sendMessage("§cDistance: "+((int)distance)+" blocks");
+	    					player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
+	    					player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
+	    					player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
+	    					player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
 	    				}
 	    				
 	    			}
 	    			else {
-	    				player.sendMessage("§cThe waypoint's signature has been altered. Teleporter unlinked.");
+	    				player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");
 	    				waypoints.remove(sig);
 	    			}
 	    		}
 	    		else {
-	    			player.sendMessage("§cThe waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
+	    			player.sendMessage(ChatColor.RED+"The waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
 	    			waypoints.remove(sig);
 	    		}
 	    	}
 	    	else {
-	    		player.sendMessage("§cThere is no waypoint with this signature.");
+	    		player.sendMessage(ChatColor.RED+"There is no waypoint with this signature.");
 	    	}
 	    }
 	    else if (isWaypoint(blockClicked)) {
@@ -121,18 +141,18 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	if (!waypoints.containsKey(sig)) {
 	    		waypoints.put(sig, new LocationWrapper(blockClicked.getLocation()));
 	    		Serializer.serializeObject(waypoints, "plugins/TeleportationRunes/waypoints.dat");
-	    		player.sendMessage("§aWaypoint activated!");
+	    		player.sendMessage(ChatColor.GREEN+"Waypoint activated!");
 	    	}
 	    	else if (waypoints.get(sig).getLoc().equals(blockClicked.getLocation())) {
-	    		player.sendMessage("§cThis waypoint is already active.");
+	    		player.sendMessage(ChatColor.RED+"This waypoint is already active.");
 	    	}
 	    	else if (!isWaypoint(waypoints.get(sig).getLoc().getBlock()) || !sig.equals(Signature.getSignatureFromLocation(waypoints.get(sig).getLoc()))){
 	    		waypoints.put(sig, new LocationWrapper(blockClicked.getLocation()));
 	    		Serializer.serializeObject(waypoints, "plugins/TeleportationRunes/waypoints.dat");
-	    		player.sendMessage("§aOld waypoint was altered or damaged. New waypoint activated!");
+	    		player.sendMessage(ChatColor.GREEN+"Old waypoint was altered or damaged. New waypoint activated!");
 	    	}
 	    	else {
-	    		player.sendMessage("§cThis waypoint signature has already been used. You must change the signature in order to activate this waypoint.");
+	    		player.sendMessage(ChatColor.RED+"This waypoint signature has already been used. You must change the signature in order to activate this waypoint.");
 	    	}
 	    }
 
@@ -154,47 +174,42 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("tr")) { // If the player typed /tr then do the following...
+		if (cmd.getName().equalsIgnoreCase("tr") || cmd.getName().equalsIgnoreCase("TeleportationRunes")) { // If the player typed /tr then do the following...
 			if (sender.isOp()) {
 				if (args.length > 0) {
-					if (args[0].equalsIgnoreCase("list")) {
-						sender.sendMessage("§6--------------------------------------------------");
+					if (args[0].equalsIgnoreCase("reload")) {
+						this.reloadConfig();
+						sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
+						return true;
+					}
+					else if (args[0].equalsIgnoreCase("list")) {
+						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
 						for (Entry<Signature, LocationWrapper> entry : waypoints.entrySet()) {
 							int n = entry.getKey().getNorth();
 							int s = entry.getKey().getSouth();
 							int e = entry.getKey().getEast();
 							int w = entry.getKey().getWest();
 							Location loc = entry.getValue().getLoc();
-							sender.sendMessage("§6Rune:");
+							sender.sendMessage(ChatColor.GOLD+"Waypoint:");
 							sender.sendMessage("   North: "+Material.getMaterial(n)+" ("+n+")");
 							sender.sendMessage("   South: "+Material.getMaterial(s)+" ("+s+")");
 							sender.sendMessage("   East: "+Material.getMaterial(e)+" ("+e+")");
 							sender.sendMessage("   West: "+Material.getMaterial(w)+" ("+w+")");
 							sender.sendMessage("   Location: "+loc.getX()+", "+loc.getY()+", "+loc.getZ()+"\n");
 						}
-						sender.sendMessage("§6--------------------------------------------------");
-						return true;
-					}
-					else if (args[0].equalsIgnoreCase("exp")) {
-						sender.sendMessage("INT: "+Integer.parseInt(args[1]));
-						((Player)sender).setLevel(0);
-						((Player)sender).setExp(0);
-						((Player)sender).giveExp(Integer.parseInt(args[1]));
-//						((Player)sender).setTotalExperience(Integer.parseInt(args[1]));
+						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
 						return true;
 					}
 					else {
-						sender.sendMessage("§6Invalid command.");
-						return true;
+						return false;
 					}
 				}
 				else {
-					sender.sendMessage("§6Specify a command.");
-					return true;
+					return false;
 				}
 			}
 			else {
-				sender.sendMessage("§6You are not an OP!");
+				sender.sendMessage(ChatColor.GOLD+"You are not an OP!");
 				return true;
 			}
 		} 

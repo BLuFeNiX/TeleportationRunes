@@ -6,11 +6,9 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.bukkit.Location;
 
 public class Signature implements Serializable {
-	
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 8365784548207556928L;
+	
 	int northBlock;
 	int southBlock;
 	int eastBlock;
@@ -63,12 +61,6 @@ public class Signature implements Serializable {
             return true;
 		if (obj instanceof Signature) {
 			return equals((Signature)obj);
-//			Signature sig = (Signature) obj;
-//	        return new EqualsBuilder().
-//	            append(name, rhs.name).
-//	            append(age, rhs.age).
-//	            isEquals();
-//			
 		}
 		
 		return false;
