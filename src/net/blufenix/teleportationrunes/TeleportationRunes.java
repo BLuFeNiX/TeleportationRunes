@@ -1,12 +1,19 @@
 package net.blufenix.teleportationrunes;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.blufenix.common.JarUtils;
 import net.blufenix.common.Serializer;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -21,6 +28,11 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import de.congrace.exp4j.Calculable;
+import de.congrace.exp4j.ExpressionBuilder;
+import de.congrace.exp4j.UnknownFunctionException;
+import de.congrace.exp4j.UnparsableExpressionException;
+
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	static TeleportationRunes _instance;
@@ -29,6 +41,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	public void onEnable() {
 		_instance = this;
 		this.saveDefaultConfig();
+        loadLibs();
 
 		if (this.getConfig().getBoolean("TeleportationRunes.enabled") == true) {
 			waypoints = (Map<Signature, LocationWrapper>) Serializer.getSerializedObject(HashMap.class, "plugins/TeleportationRunes/waypoints.dat");
@@ -56,6 +69,47 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			this.getServer().getPluginManager().disablePlugin(this);
 		}
 	}
+	
+    private void loadLibs() {
+    	try {
+            
+        	final File[] libs = new File[] {
+                    new File(getDataFolder(), "exp4j-0.3.10.jar")
+            };
+            
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                    JarUtils.extractFromJar(lib.getName(), lib.getAbsolutePath());
+                }
+            }
+            
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                    getLogger().warning("There was a critical error loading TeleportationRunes!" +
+                    		" Could not find lib: " + lib.getName());
+                    Bukkit.getServer().getPluginManager().disablePlugin(this);
+                    return;
+                }
+                addClassPath(JarUtils.getJarUrl(lib));
+            }
+            
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+	}
+
+	private void addClassPath(final URL url) throws IOException {
+        final URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        final Class<URLClassLoader> sysclass = URLClassLoader.class;
+        try {
+            final Method method = sysclass.getDeclaredMethod("addURL", new Class[] { URL.class });
+            method.setAccessible(true);
+            method.invoke(sysloader, new Object[] { url });
+        } catch (final Throwable t) {
+            t.printStackTrace();
+            throw new IOException("Error adding " + url + " to system classloader");
+        }
+    }
 	
 	public void onDisable() {
 		this.getLogger().info("TeleportationRunes has been unloaded!");
@@ -87,39 +141,58 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    					distance = Double.POSITIVE_INFINITY;
 	    				}
 	    				
-	    				int distancePerExp = this.getConfig().getInt("TeleportationRunes.distancePerExp");
-	    				
-	    				int fee = (int) (Math.ceil(distance/distancePerExp));
-	    				if (this.getConfig().getBoolean("TeleportationRunes.altitudeMultiplier.enabled")) {
-	    					double altitudeDelta = Math.abs(waypointLocation.getLoc().getBlockY() - blockClicked.getLocation().getBlockY());
-	    					fee = (int) (fee * (1 + altitudeDelta/100));
-	    				}
-	    				
-	    				if (currentExp >= fee) {
-	    					player.setLevel(0);
-		    				player.setExp(0);
-		    				player.giveExp(currentExp-fee);
-		    				
-		    				Location playerLoc = player.getLocation();
-		    				Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
-		    				player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
-		    				player.teleport(adjustedLoc); 
-		    				player.getWorld().strikeLightningEffect(adjustedLoc);
-		    				
-		    				this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
-		    				player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
-		    				player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
-	    				}
-	    				else if (distance == Double.POSITIVE_INFINITY) {
+	    				if (distance == Double.POSITIVE_INFINITY) {
 	    					player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
 	    				}
 	    				else {
-	    					player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
-	    					player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
-	    					player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
-	    					player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
+	    					
+	    					try {
+	    						
+								int deltaX = Math.abs(waypointLocation.getLoc().getBlockX() - blockClicked.getLocation().getBlockX());
+								int deltaY = Math.abs(waypointLocation.getLoc().getBlockY() - blockClicked.getLocation().getBlockY());
+								int deltaZ = Math.abs(waypointLocation.getLoc().getBlockZ() - blockClicked.getLocation().getBlockZ());
+								
+								String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
+								
+								Calculable calc = new ExpressionBuilder(costFormula)
+								.withVariable("distance", distance)
+								.withVariable("deltaX", deltaX)
+								.withVariable("deltaY", deltaY)
+								.withVariable("deltaZ", deltaZ)
+								.build();
+								
+								int fee = (int) Math.ceil(calc.calculate());
+								
+								if (currentExp >= fee) {
+			    					player.setLevel(0);
+				    				player.setExp(0);
+				    				player.giveExp(currentExp-fee);
+				    				
+				    				Location playerLoc = player.getLocation();
+				    				Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
+				    				player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
+				    				player.teleport(adjustedLoc); 
+				    				player.getWorld().strikeLightningEffect(adjustedLoc);
+				    				
+				    				this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
+				    				player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
+				    				player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
+			    				}
+			    				else {
+			    					player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
+			    					player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
+			    					player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
+			    					player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
+			    				}
+								
+	    					} catch (UnknownFunctionException e) {
+								player.sendMessage("TeleportationRunes cost formula is invalid. Please inform your server administrator.");
+	    					} catch (UnparsableExpressionException e) {
+								player.sendMessage("TeleportationRunes cost formula is invalid. Please inform your server administrator.");
+							}
+		    		        
 	    				}
-	    				
+						
 	    			}
 	    			else {
 	    				player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");

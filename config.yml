@@ -1,6 +1,14 @@
 TeleportationRunes:
   enabled: true
-  distancePerExp: 10
-  
-  altitudeMultiplier:
-    enabled: false
+  costFormula: (distance / 10) 
+  #
+  # suggested formulas:
+  #
+  # Default. This costs 1 experience point for every 10 blocks traveled:
+  # (distance / 10)
+  #
+  # Make teleporting to much higher/lower places, like mines
+  # or dungeons, more expensive:
+  # (distance / 10) * (1 + deltaY/100)
+  #
+  # valid variables are: distance deltaX deltaY deltaZ

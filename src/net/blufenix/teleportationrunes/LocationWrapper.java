@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.bukkit.Location;
 import org.bukkit.Server;
 
-public class LocationWrapper implements Serializable{
+public class LocationWrapper implements Serializable {
 
 	private static final long serialVersionUID = 3605072683155274382L;
 	
