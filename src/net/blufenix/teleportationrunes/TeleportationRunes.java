@@ -131,6 +131,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    		if (isWaypoint(waypointLocation.getLoc().getBlock())) { // make sure the waypoint hasn't been destroyed
 	    			if (Signature.getSignatureFromLocation(waypointLocation.getLoc()).equals(sig)) { // make sure the signature hasn't changed
 	    				
+	    				if (!isSafe(waypointLocation.getLoc())) {
+	    					player.sendMessage(ChatColor.RED+"Teleportation failed. Destination is obstructed.");
+	    					return;
+	    				}
+	    				
 	    				int currentExp = getTotalExp(player);
 	    				
 	    				double distance;
@@ -231,6 +236,18 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	}
 	
+	private boolean isSafe(Location loc) {
+		int block1 = loc.clone().add(0, 1, 0).getBlock().getTypeId();
+		int block2 = loc.clone().add(0, 2, 0).getBlock().getTypeId();
+		
+		if ((block1 == Material.AIR.getId() || block1 == Material.WATER.getId())
+		 && (block2 == Material.AIR.getId() || block2 == Material.WATER.getId())) {
+			return true;
+		}
+		
+		return false;
+	}
+
 	private int getTotalExp(Player player) {
 		double level = player.getLevel()+player.getExp();
 		int exp = 0;
@@ -247,7 +264,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("tr") || cmd.getName().equalsIgnoreCase("TeleportationRunes")) { // If the player typed /tr then do the following...
+		if (cmd.getName().equalsIgnoreCase("tr")) { // If the player typed /tr then do the following...
 			if (sender.isOp()) {
 				if (args.length > 0) {
 					if (args[0].equalsIgnoreCase("reload")) {
@@ -297,11 +314,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	 */
 	boolean isTeleporter(Block block) {
 		Location loc = block.getLocation();
-		if ((block.getType().getId() == Material.REDSTONE_BLOCK.getId())
-		&& (loc.clone().add(-1, 0, -1)).getBlock().getType().getId() == Material.REDSTONE_BLOCK.getId()
-		&& (loc.clone().add(-1, 0, 1)).getBlock().getType().getId() == Material.REDSTONE_BLOCK.getId()
-		&& (loc.clone().add(1, 0, -1)).getBlock().getType().getId() == Material.REDSTONE_BLOCK.getId()
-		&& (loc.clone().add(1, 0, 1)).getBlock().getType().getId() == Material.REDSTONE_BLOCK.getId()) {
+		if ((block.getTypeId() == Material.REDSTONE_BLOCK.getId())
+		&& (loc.clone().add(-1, 0, -1)).getBlock().getTypeId() == Material.REDSTONE_BLOCK.getId()
+		&& (loc.clone().add(-1, 0, 1)).getBlock().getTypeId() == Material.REDSTONE_BLOCK.getId()
+		&& (loc.clone().add(1, 0, -1)).getBlock().getTypeId() == Material.REDSTONE_BLOCK.getId()
+		&& (loc.clone().add(1, 0, 1)).getBlock().getTypeId() == Material.REDSTONE_BLOCK.getId()) {
 			return true;
 		}
 		
@@ -316,11 +333,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	 */
 	boolean isWaypoint(Block block) {
 		Location loc = block.getLocation();
-		if ((block.getType().getId() == Material.LAPIS_BLOCK.getId())
-		&& (loc.clone().add(-1, 0, -1)).getBlock().getType().getId() == Material.LAPIS_BLOCK.getId()
-		&& (loc.clone().add(-1, 0, 1)).getBlock().getType().getId() == Material.LAPIS_BLOCK.getId()
-		&& (loc.clone().add(1, 0, -1)).getBlock().getType().getId() == Material.LAPIS_BLOCK.getId()
-		&& (loc.clone().add(1, 0, 1)).getBlock().getType().getId() == Material.LAPIS_BLOCK.getId()) {
+		if ((block.getTypeId() == Material.LAPIS_BLOCK.getId())
+		&& (loc.clone().add(-1, 0, -1)).getBlock().getTypeId() == Material.LAPIS_BLOCK.getId()
+		&& (loc.clone().add(-1, 0, 1)).getBlock().getTypeId() == Material.LAPIS_BLOCK.getId()
+		&& (loc.clone().add(1, 0, -1)).getBlock().getTypeId() == Material.LAPIS_BLOCK.getId()
+		&& (loc.clone().add(1, 0, 1)).getBlock().getTypeId() == Material.LAPIS_BLOCK.getId()) {
 			return true;
 		}
 				
