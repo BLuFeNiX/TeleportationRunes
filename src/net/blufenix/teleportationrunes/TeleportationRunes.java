@@ -35,8 +35,8 @@ import de.congrace.exp4j.UnparsableExpressionException;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
-	static TeleportationRunes _instance;
-	Map<Signature, LocationWrapper> waypoints;
+	private static TeleportationRunes _instance;
+	private Map<Signature, LocationWrapper> waypoints;
 	
 	public void onEnable() {
 		_instance = this;
@@ -122,110 +122,109 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    
 	    Player player = event.getPlayer();
 	    Block blockClicked = player.getTargetBlock(null, 4); // only allow selecting blocks 4 blocks away
+	    Location blockLocation = blockClicked.getLocation();
 
 	    if (isTeleporter(blockClicked)) {
-	    	//player.sendMessage("This is a teleporter!");
-	    	Signature sig = Signature.getSignatureFromLocation(blockClicked.getLocation());
-	    	if (waypoints.containsKey(sig)) { // is there a waypoint matching this teleporter?
-	    		LocationWrapper waypointLocation = waypoints.get(sig);
-	    		if (isWaypoint(waypointLocation.getLoc().getBlock())) { // make sure the waypoint hasn't been destroyed
-	    			if (Signature.getSignatureFromLocation(waypointLocation.getLoc()).equals(sig)) { // make sure the signature hasn't changed
+
+	    	// is there a waypoint matching this teleporter?
+	    	Signature sig = Signature.getSignatureFromLocation(blockLocation);
+	    	if (!waypoints.containsKey(sig)) { 
+	    		player.sendMessage(ChatColor.RED+"There is no waypoint with this signature.");
+	    		return;
+	    	}
+	    	
+	    	// make sure the waypoint hasn't been destroyed
+	    	LocationWrapper waypointLocation = waypoints.get(sig);
+	    	if (!isWaypoint(waypointLocation.getLoc().getBlock())) { 
+    			player.sendMessage(ChatColor.RED+"The waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
+    			waypoints.remove(sig);
+    			return;
+    		}
+	    		
+	    	// make sure the signature hasn't changed
+	    	if (!Signature.getSignatureFromLocation(waypointLocation.getLoc()).equals(sig)) {
+	    		player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");
+				waypoints.remove(sig);
+				return;
+	    	}
+	    	
+	    	// make sure teleport destination won't suffocate the player
+	    	if (!isSafe(waypointLocation.getLoc())) {
+	    		player.sendMessage(ChatColor.RED+"Teleportation failed. Destination is obstructed.");
+	    		return;
+	    	}
 	    				
-	    				if (!isSafe(waypointLocation.getLoc())) {
-	    					player.sendMessage(ChatColor.RED+"Teleportation failed. Destination is obstructed.");
-	    					return;
-	    				}
-	    				
-	    				int currentExp = getTotalExp(player);
-	    				
-	    				double distance;
-	    				try {
-	    					distance = waypointLocation.getLoc().distance(blockClicked.getLocation());
-	    				}
-	    				catch (IllegalArgumentException iae) {
-	    					distance = Double.POSITIVE_INFINITY;
-	    				}
-	    				
-	    				if (distance == Double.POSITIVE_INFINITY) {
-	    					player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
-	    				}
-	    				else {
-	    					
-	    					try {
-	    						
-								int deltaX = Math.abs(waypointLocation.getLoc().getBlockX() - blockClicked.getLocation().getBlockX());
-								int deltaY = Math.abs(waypointLocation.getLoc().getBlockY() - blockClicked.getLocation().getBlockY());
-								int deltaZ = Math.abs(waypointLocation.getLoc().getBlockZ() - blockClicked.getLocation().getBlockZ());
-								
-								String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
-								
-								Calculable calc = new ExpressionBuilder(costFormula)
-								.withVariable("distance", distance)
-								.withVariable("deltaX", deltaX)
-								.withVariable("deltaY", deltaY)
-								.withVariable("deltaZ", deltaZ)
-								.build();
-								
-								int fee = (int) Math.ceil(calc.calculate());
-								
-								if (currentExp >= fee) {
-			    					player.setLevel(0);
-				    				player.setExp(0);
-				    				player.giveExp(currentExp-fee);
-				    				
-				    				Location playerLoc = player.getLocation();
-				    				Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
-				    				player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
-				    				player.teleport(adjustedLoc); 
-				    				player.getWorld().strikeLightningEffect(adjustedLoc);
-				    				
-				    				this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
-				    				player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
-				    				player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
-			    				}
-			    				else {
-			    					player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
-			    					player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
-			    					player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
-			    					player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
-			    				}
-								
-	    					} catch (UnknownFunctionException e) {
-								player.sendMessage("TeleportationRunes cost formula is invalid. Please inform your server administrator.");
-	    					} catch (UnparsableExpressionException e) {
-								player.sendMessage("TeleportationRunes cost formula is invalid. Please inform your server administrator.");
-							}
-		    		        
-	    				}
-						
-	    			}
-	    			else {
-	    				player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");
-	    				waypoints.remove(sig);
-	    			}
+	    	// is the destination in our current world?
+	    	if (!waypointLocation.getWorldName().equals(blockLocation.getWorld().getName())) {
+	    		player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
+	    		return;
+	    	}
+	    	
+	    	// calculate teleport distance			
+	    	double distance = waypointLocation.getLoc().distance(blockLocation);
+
+	    	try {
+	    		
+	    		int deltaX = Math.abs(waypointLocation.getLoc().getBlockX() - blockLocation.getBlockX());
+	    		int deltaY = Math.abs(waypointLocation.getLoc().getBlockY() - blockLocation.getBlockY());
+	    		int deltaZ = Math.abs(waypointLocation.getLoc().getBlockZ() - blockLocation.getBlockZ());
+
+	    		String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
+
+	    		Calculable calc = new ExpressionBuilder(costFormula)
+	    		.withVariable("distance", distance)
+	    		.withVariable("deltaX", deltaX)
+	    		.withVariable("deltaY", deltaY)
+	    		.withVariable("deltaZ", deltaZ)
+	    		.build();
+
+	    		int fee = (int) Math.ceil(calc.calculate());
+	    		int currentExp = getTotalExp(player);
+
+	    		if (currentExp >= fee) {
+	    			// subtract EXP
+	    			player.setLevel(0);
+	    			player.setExp(0);
+	    			player.giveExp(currentExp-fee);
+
+	    			// teleport player
+	    			Location playerLoc = player.getLocation();
+	    			Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
+	    			player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
+	    			player.teleport(adjustedLoc); 
+	    			player.getWorld().strikeLightningEffect(adjustedLoc);
+
+	    			this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
+	    			player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
+	    			player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
 	    		}
 	    		else {
-	    			player.sendMessage(ChatColor.RED+"The waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
-	    			waypoints.remove(sig);
+	    			player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
+	    			player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
+	    			player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
+	    			player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
 	    		}
+	    		
+	    	} catch (UnknownFunctionException e) {
+	    		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
+	    	} catch (UnparsableExpressionException e) {
+	    		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
 	    	}
-	    	else {
-	    		player.sendMessage(ChatColor.RED+"There is no waypoint with this signature.");
-	    	}
+	    	
 	    }
 	    else if (isWaypoint(blockClicked)) {
-	    	Signature sig = Signature.getSignatureFromLocation(blockClicked.getLocation());
+	    	Signature sig = Signature.getSignatureFromLocation(blockLocation);
 	    	// register waypoint
 	    	if (!waypoints.containsKey(sig)) {
-	    		waypoints.put(sig, new LocationWrapper(blockClicked.getLocation()));
+	    		waypoints.put(sig, new LocationWrapper(blockLocation));
 	    		Serializer.serializeObject(waypoints, "plugins/TeleportationRunes/waypoints.dat");
 	    		player.sendMessage(ChatColor.GREEN+"Waypoint activated!");
 	    	}
-	    	else if (waypoints.get(sig).getLoc().equals(blockClicked.getLocation())) {
+	    	else if (waypoints.get(sig).getLoc().equals(blockLocation)) {
 	    		player.sendMessage(ChatColor.RED+"This waypoint is already active.");
 	    	}
 	    	else if (!isWaypoint(waypoints.get(sig).getLoc().getBlock()) || !sig.equals(Signature.getSignatureFromLocation(waypoints.get(sig).getLoc()))){
-	    		waypoints.put(sig, new LocationWrapper(blockClicked.getLocation()));
+	    		waypoints.put(sig, new LocationWrapper(blockLocation));
 	    		Serializer.serializeObject(waypoints, "plugins/TeleportationRunes/waypoints.dat");
 	    		player.sendMessage(ChatColor.GREEN+"Old waypoint was altered or damaged. New waypoint activated!");
 	    	}

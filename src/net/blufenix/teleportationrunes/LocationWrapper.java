@@ -33,4 +33,8 @@ public class LocationWrapper implements Serializable {
 		return new Location(server.getWorld("world"), x, y, z);
 	}
 	
+	String getWorldName() {
+		return world;
+	}
+	
 }
