@@ -30,7 +30,7 @@ public class LocationWrapper implements Serializable {
 
 	Location getLoc() {
 		Server server = TeleportationRunes.getInstance().getServer();
-		return new Location(server.getWorld("world"), x, y, z);
+		return new Location(server.getWorld(world), x, y, z);
 	}
 	
 	String getWorldName() {
