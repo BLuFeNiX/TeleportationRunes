@@ -1,0 +1,2 @@
+setting for teleport into water
+config for custom messages and which to display

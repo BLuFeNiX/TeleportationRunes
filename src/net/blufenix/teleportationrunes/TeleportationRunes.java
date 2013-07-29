@@ -27,11 +27,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
-import de.congrace.exp4j.UnknownFunctionException;
-import de.congrace.exp4j.UnparsableExpressionException;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
@@ -205,9 +202,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    			player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
 	    		}
 	    		
-	    	} catch (UnknownFunctionException e) {
-	    		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
-	    	} catch (UnparsableExpressionException e) {
+	    	} catch (Exception e) {
 	    		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
 	    	}
 	    	
