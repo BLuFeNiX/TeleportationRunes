@@ -5,10 +5,16 @@ TeleportationRunes:
   # suggested formulas:
   #
   # Default. This costs 1 experience point for every 10 blocks traveled:
-  # (distance / 10)
+  # costFormula: (distance / 10)
   #
   # Make teleporting to much higher/lower places, like mines
   # or dungeons, more expensive:
-  # (distance / 10) * (1 + deltaY/100)
+  # costFormula: (distance / 10) * (1 + deltaY/100)
   #
-  # valid variables are: distance deltaX deltaY deltaZ
+  # Charge double EXP for teleporting with a horse:
+  # costFormula: (distance / 10) * numEntities
+  #
+  # A combination of the previous two formulas:
+  # costFormula: (distance / 10) * (1 + deltaY/100) * numEntities
+  #
+  # valid variables are: distance deltaX deltaY deltaZ numEntities

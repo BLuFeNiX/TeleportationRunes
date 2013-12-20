@@ -21,12 +21,14 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
 
@@ -114,11 +116,20 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	
 	@EventHandler
 	public void onPlayerInteractBlock(PlayerInteractEvent event) {
-		// only activate on right-click
-	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) { return; }
+		
+	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) { return; } // only activate on right-click
+	    if (event.isBlockInHand()) { return; } // don't do anything if the player placed a block
 	    
 	    Player player = event.getPlayer();
-	    Block blockClicked = player.getTargetBlock(null, 4); // only allow selecting blocks 4 blocks away
+	    
+	    if(player.isInsideVehicle()) {
+	    	if( !(player.getVehicle() instanceof Horse) ) {
+	    		player.sendMessage(ChatColor.RED+"Teleportation failed. You must be on foot or riding a horse to teleport.");
+	    		return;
+	    	}
+	    }
+	    
+	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
 	    if (isTeleporter(blockClicked)) {
@@ -165,6 +176,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    		int deltaX = Math.abs(waypointLocation.getLoc().getBlockX() - blockLocation.getBlockX());
 	    		int deltaY = Math.abs(waypointLocation.getLoc().getBlockY() - blockLocation.getBlockY());
 	    		int deltaZ = Math.abs(waypointLocation.getLoc().getBlockZ() - blockLocation.getBlockZ());
+	    		int numEntities = (player.isInsideVehicle() && player.getVehicle() instanceof Horse) ? 2 : 1;
 
 	    		String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
 
@@ -173,6 +185,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    		.withVariable("deltaX", deltaX)
 	    		.withVariable("deltaY", deltaY)
 	    		.withVariable("deltaZ", deltaZ)
+	    		.withVariable("numEntities", numEntities)
 	    		.build();
 
 	    		int fee = (int) Math.ceil(calc.calculate());
@@ -188,7 +201,18 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    			Location playerLoc = player.getLocation();
 	    			Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
 	    			player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
-	    			player.teleport(adjustedLoc); 
+	    			
+	    			if (player.isInsideVehicle() && player.getVehicle() instanceof Horse) {
+	    				Horse horse = (Horse) player.getVehicle();
+	    				horse.eject();
+	    				horse.teleport(adjustedLoc);
+	    				player.teleport(adjustedLoc);
+	    				horse.setPassenger(player);
+	    			}
+	    			else {
+	    				player.teleport(adjustedLoc);
+	    			}
+	    	
 	    			player.getWorld().strikeLightningEffect(adjustedLoc);
 
 	    			this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
@@ -231,11 +255,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 	
 	private boolean isSafe(Location loc) {
-		int block1 = loc.clone().add(0, 1, 0).getBlock().getTypeId();
-		int block2 = loc.clone().add(0, 2, 0).getBlock().getTypeId();
+		Material block1 = loc.clone().add(0, 1, 0).getBlock().getType();
+		Material block2 = loc.clone().add(0, 2, 0).getBlock().getType();
 		
-		if ((block1 == Material.AIR.getId() || block1 == Material.WATER.getId())
-		 && (block2 == Material.AIR.getId() || block2 == Material.WATER.getId())) {
+		if ((block1.compareTo(Material.AIR) == 0 || block1.compareTo(Material.WATER) == 0)
+		 && (block2.compareTo(Material.AIR) == 0 || block2.compareTo(Material.WATER) == 0)) {
 			return true;
 		}
 		
