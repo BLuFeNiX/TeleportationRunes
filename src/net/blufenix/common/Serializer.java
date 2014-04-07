@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import net.blufenix.teleportationrunes.TeleportationRunes;
 
 public class Serializer {
 	
@@ -33,7 +34,7 @@ public class Serializer {
 					ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
 					Object tempObj = in.readObject();
 					if (tempObj.getClass().equals(c)) {
-						System.out.println("Loading "+filename);
+						TeleportationRunes._instance.getLogger().info("Loading "+filename);
 						serObject = tempObj;
 					}
 					in.close();
@@ -63,4 +64,15 @@ public class Serializer {
 			
 			return null;
 	}
+	
+	public static Long getSerialVersionUID(String filename) throws FileNotFoundException, IOException, ClassNotFoundException {
+		if (new File(filename).exists()) {
+			UIDGrabber uidGrabber = new UIDGrabber(new FileInputStream(filename));
+			long uid = uidGrabber.getSerialVersionUID();
+			uidGrabber.close();
+			return uid;
+		}
+		else { return null; }
+	}
+	
 }

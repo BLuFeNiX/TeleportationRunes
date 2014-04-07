@@ -29,7 +29,7 @@ public class LocationWrapper implements Serializable {
 	}
 
 	Location getLoc() {
-		Server server = TeleportationRunes.getInstance().getServer();
+		Server server = TeleportationRunes._instance.getServer();
 		return new Location(server.getWorld(world), x, y, z);
 	}
 	

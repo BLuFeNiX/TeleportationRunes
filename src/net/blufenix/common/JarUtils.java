@@ -7,11 +7,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import net.blufenix.teleportationrunes.TeleportationRunes;
+
+import org.bukkit.Bukkit;
  
 public class JarUtils {
 	
@@ -81,6 +87,47 @@ public class JarUtils {
         String path = new File(JarUtils.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
         path = URLDecoder.decode(path, "UTF-8");
         return new JarFile(path);
+    }
+    
+	public static void loadLibs() {
+    	try {
+            
+        	final File[] libs = new File[] {
+                    new File(TeleportationRunes._instance.getDataFolder(), "exp4j-0.3.10.jar")
+            };
+            
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                    JarUtils.extractFromJar(lib.getName(), lib.getAbsolutePath());
+                }
+            }
+            
+            for (final File lib : libs) {
+                if (!lib.exists()) {
+                	TeleportationRunes._instance.getLogger().warning("There was a critical error loading TeleportationRunes!" +
+                    		" Could not find lib: " + lib.getName());
+                    Bukkit.getServer().getPluginManager().disablePlugin(TeleportationRunes._instance);
+                    return;
+                }
+                addClassPath(JarUtils.getJarUrl(lib));
+            }
+            
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+	}
+
+	private static void addClassPath(final URL url) throws IOException {
+        final URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        final Class<URLClassLoader> sysclass = URLClassLoader.class;
+        try {
+            final Method method = sysclass.getDeclaredMethod("addURL", new Class[] { URL.class });
+            method.setAccessible(true);
+            method.invoke(sysloader, new Object[] { url });
+        } catch (final Throwable t) {
+            t.printStackTrace();
+            throw new IOException("Error adding " + url + " to system classloader");
+        }
     }
  
 }

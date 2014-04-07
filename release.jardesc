@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="/home/blufenix/Desktop/TeleportationRunes-TESTING.jar"/>
+    <jar path="/home/blufenix/Desktop/MC TEST/plugins/TeleportationRunes-TESTING.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/TeleportationRunes/release.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>

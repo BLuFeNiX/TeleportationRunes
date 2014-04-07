@@ -75,4 +75,8 @@ public class Signature implements Serializable {
             toHashCode();
     }
 	
+	public static long getSerialVersionUID() {
+		return serialVersionUID;
+	}
+	
 }
