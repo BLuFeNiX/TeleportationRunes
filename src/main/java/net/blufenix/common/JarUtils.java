@@ -93,7 +93,7 @@ public class JarUtils {
     	try {
             
         	final File[] libs = new File[] {
-                    new File(TeleportationRunes._instance.getDataFolder(), "exp4j.jar")
+                    new File(TeleportationRunes.getInstance().getDataFolder(), "exp4j.jar")
             };
             
             for (final File lib : libs) {
@@ -104,9 +104,9 @@ public class JarUtils {
             
             for (final File lib : libs) {
                 if (!lib.exists()) {
-                	TeleportationRunes._instance.getLogger().warning("There was a critical error loading TeleportationRunes!" +
+                	TeleportationRunes.getInstance().getLogger().warning("There was a critical error loading TeleportationRunes!" +
                     		" Could not find lib: " + lib.getName());
-                    Bukkit.getServer().getPluginManager().disablePlugin(TeleportationRunes._instance);
+                    Bukkit.getServer().getPluginManager().disablePlugin(TeleportationRunes.getInstance());
                     return;
                 }
                 addClassPath(JarUtils.getJarUrl(lib));

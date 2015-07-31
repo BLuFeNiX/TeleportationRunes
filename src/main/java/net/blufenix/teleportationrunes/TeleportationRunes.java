@@ -1,13 +1,8 @@
 package net.blufenix.teleportationrunes;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import de.congrace.exp4j.Calculable;
+import de.congrace.exp4j.ExpressionBuilder;
 import net.blufenix.common.JarUtils;
-import net.blufenix.common.Serializer;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -23,15 +18,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import de.congrace.exp4j.Calculable;
-import de.congrace.exp4j.ExpressionBuilder;
-
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
-	public static TeleportationRunes _instance;
-	protected static String dataFile = "plugins/TeleportationRunes/waypoints.dat";
-	private Map<Signature2, LocationWrapper> waypoints;
-	
+	private static TeleportationRunes _instance;
+	private WaypointDB db;
+
+	public static JavaPlugin getInstance() {
+		return _instance;
+	}
+
 	@SuppressWarnings("unchecked")
 	public void onEnable() {
 		_instance = this;
@@ -39,12 +34,9 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
         JarUtils.loadLibs();
 
 		if (this.getConfig().getBoolean("TeleportationRunes.enabled") == true) {
+            db = new WaypointDB();
 			
-			Upgrader.checkForOldDataFormat();
-			
-			waypoints = (Map<Signature2, LocationWrapper>) Serializer.getSerializedObject(HashMap.class, dataFile);
-			
-			// check for (and remove) broken waypoints
+/*			// check for (and remove) broken waypoints
 			Iterator<Entry<Signature2, LocationWrapper>> it = waypoints.entrySet().iterator();
 			while (it.hasNext()) {
 				Entry<Signature2, LocationWrapper> entry = it.next();
@@ -56,7 +48,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				else if (!entry.getKey().equals(Signature2.getSignatureFromLocation(loc))) {
 					it.remove();
 				}
-			}
+			}*/
 			
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
@@ -111,19 +103,20 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	}
 	    }
 	    else if (isWaypoint(blockClicked)) {
-	    	Signature2 sig = Signature2.getSignatureFromLocation(blockLocation);
+	    	Signature sig = Signature.fromLocation(blockLocation);
 	    	// register waypoint
-	    	if (!waypoints.containsKey(sig)) {
-	    		waypoints.put(sig, new LocationWrapper(blockLocation));
-	    		saveData();
+			Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
+	    	if (existingWaypoint == null) {
+	    		db.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
 	    		player.sendMessage(ChatColor.GREEN+"Waypoint activated!");
 	    	}
-	    	else if (waypoints.get(sig).getLoc().equals(blockLocation)) {
+	    	else if (existingWaypoint.loc.equals(blockLocation)) {
 	    		player.sendMessage(ChatColor.RED+"This waypoint is already active.");
 	    	}
-	    	else if (!isWaypoint(waypoints.get(sig).getLoc().getBlock()) || !sig.equals(Signature2.getSignatureFromLocation(waypoints.get(sig).getLoc()))){
-	    		waypoints.put(sig, new LocationWrapper(blockLocation));
-	    		saveData();
+	    	else if (!isWaypoint(existingWaypoint.loc.getBlock()) || !sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+				// TODO change remove/add to update
+				db.removeWaypoint(existingWaypoint);
+				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
 	    		player.sendMessage(ChatColor.GREEN+"Old waypoint was altered or damaged. New waypoint activated!");
 	    	}
 	    	else {
@@ -134,48 +127,49 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 	
 	private boolean attemptTeleport(Player player, Location blockLocation) {
-    	// is there a waypoint matching this teleporter?
-    	Signature2 sig = Signature2.getSignatureFromLocation(blockLocation);
-    	if (!waypoints.containsKey(sig)) { 
+    	Signature sig = Signature.fromLocation(blockLocation);
+        Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
+
+        // is there a waypoint matching this teleporter?
+    	if (existingWaypoint == null) {
     		player.sendMessage(ChatColor.RED+"There is no waypoint with this signature.");
     		return false;
     	}
     	
     	// make sure the waypoint hasn't been destroyed
-    	LocationWrapper waypointLocation = waypoints.get(sig);
-    	if (!isWaypoint(waypointLocation.getLoc().getBlock())) { 
+    	if (!isWaypoint(existingWaypoint.loc.getBlock())) {
 			player.sendMessage(ChatColor.RED+"The waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
-			waypoints.remove(sig);
+			db.removeWaypoint(existingWaypoint);
 			return false;
 		}
     		
     	// make sure the signature hasn't changed
-    	if (!Signature2.getSignatureFromLocation(waypointLocation.getLoc()).equals(sig)) {
+    	if (!existingWaypoint.sig.equals(sig)) {
     		player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");
-			waypoints.remove(sig);
+            db.removeWaypoint(existingWaypoint);
 			return false;
     	}
     	
     	// make sure teleport destination won't suffocate the player
-    	if (!isSafe(waypointLocation.getLoc())) {
+    	if (!isSafe(existingWaypoint.loc)) {
     		player.sendMessage(ChatColor.RED+"Teleportation failed. Destination is obstructed.");
     		return false;
     	}
     				
     	// is the destination in our current world?
-    	if (!waypointLocation.getWorldName().equals(blockLocation.getWorld().getName())) {
+    	if (!existingWaypoint.loc.getWorld().equals(blockLocation.getWorld())) {
     		player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
     		return false;
     	}
     	
     	// calculate teleport distance			
-    	double distance = waypointLocation.getLoc().distance(blockLocation);
+    	double distance = existingWaypoint.loc.distance(blockLocation);
 
     	try {
     		
-    		int deltaX = Math.abs(waypointLocation.getLoc().getBlockX() - blockLocation.getBlockX());
-    		int deltaY = Math.abs(waypointLocation.getLoc().getBlockY() - blockLocation.getBlockY());
-    		int deltaZ = Math.abs(waypointLocation.getLoc().getBlockZ() - blockLocation.getBlockZ());
+    		int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - blockLocation.getBlockX());
+    		int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - blockLocation.getBlockY());
+    		int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - blockLocation.getBlockZ());
     		int numEntities = (player.isInsideVehicle() && player.getVehicle() instanceof Horse) ? 2 : 1;
 
     		String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
@@ -199,7 +193,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
     			// teleport player
     			Location playerLoc = player.getLocation();
-    			Location adjustedLoc = waypointLocation.getLoc().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
+    			Location adjustedLoc = existingWaypoint.loc.clone().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
     			player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
     			
     			if (player.isInsideVehicle() && player.getVehicle() instanceof Horse) {
@@ -232,10 +226,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
     		return false;
     	}
-	}
-
-	private void saveData() {
-		Serializer.serializeObject(waypoints, dataFile);
 	}
 
 	private boolean isSafe(Location loc) {
@@ -276,19 +266,20 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 					}
 					else if (args[0].equalsIgnoreCase("list")) {
 						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
-						for (Entry<Signature2, LocationWrapper> entry : waypoints.entrySet()) {
-							Material n = entry.getKey().getNorth();
-							Material s = entry.getKey().getSouth();
-							Material e = entry.getKey().getEast();
-							Material w = entry.getKey().getWest();
-							Location loc = entry.getValue().getLoc();
-							sender.sendMessage(ChatColor.GOLD+"Waypoint:");
-							sender.sendMessage("   North: "+n);
-							sender.sendMessage("   South: "+s);
-							sender.sendMessage("   East: "+e);
-							sender.sendMessage("   West: "+w);
-							sender.sendMessage("   Location: "+loc.getX()+", "+loc.getY()+", "+loc.getZ()+"\n");
-						}
+                        sender.sendMessage("Not yet implemented.");
+//						for (Entry<Signature2, LocationWrapper> entry : waypoints.entrySet()) {
+//							Material n = entry.getKey().getNorth();
+//							Material s = entry.getKey().getSouth();
+//							Material e = entry.getKey().getEast();
+//							Material w = entry.getKey().getWest();
+//							Location loc = entry.getValue().getLoc();
+//							sender.sendMessage(ChatColor.GOLD+"Waypoint:");
+//							sender.sendMessage("   North: "+n);
+//							sender.sendMessage("   South: "+s);
+//							sender.sendMessage("   East: "+e);
+//							sender.sendMessage("   West: "+w);
+//							sender.sendMessage("   Location: "+loc.getX()+", "+loc.getY()+", "+loc.getZ()+"\n");
+//						}
 						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
 						return true;
 					}

@@ -1,56 +1,36 @@
 package net.blufenix.teleportationrunes;
 
-import java.io.Serializable;
-
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.bukkit.Location;
+import org.bukkit.Material;
 
-public class Signature implements Serializable {
+public class Signature {
 
-	private static final long serialVersionUID = 8365784548207556928L;
-	
-	int northBlock;
-	int southBlock;
-	int eastBlock;
-	int westBlock;
-	
-	Signature(int n, int s, int e, int w) {
-		northBlock = n;
-		southBlock = s;
-		eastBlock = e;
-		westBlock = w;
+	public final Material north;
+	public final Material south;
+	public final Material east;
+	public final Material west;
+
+	public Signature(Material north, Material south, Material east, Material west) {
+		this.north = north;
+		this.south = south;
+		this.east = east;
+		this.west = west;
 	}
-	
-	int getNorth() {
-		return northBlock;
-	}
-	
-	int getSouth() {
-		return southBlock;
-	}
-	
-	int getEast() {
-		return eastBlock;
-	}
-	
-	int getWest() {
-		return westBlock;
-	}
-	
-	public static Signature getSignatureFromLocation(Location loc) {
-		int northBlock = loc.clone().add(0, 0, -1).getBlock().getType().getId();
-		int southBlock = loc.clone().add(0, 0, 1).getBlock().getType().getId();
-		int eastBlock = loc.clone().add(1, 0, 0).getBlock().getType().getId();
-		int westBlock = loc.clone().add(-1, 0, 0).getBlock().getType().getId();
-		Signature sig = new Signature(northBlock, southBlock, eastBlock, westBlock);
+
+	public static Signature fromLocation(Location loc) {
+		Material north = loc.clone().add(0, 0, -1).getBlock().getType();
+		Material south = loc.clone().add(0, 0, 1).getBlock().getType();
+		Material east = loc.clone().add(1, 0, 0).getBlock().getType();
+		Material west = loc.clone().add(-1, 0, 0).getBlock().getType();
+		Signature sig = new Signature(north, south, east, west);
 		return sig;
 	}
 	
 	public boolean equals(Signature sig) {
-		boolean match = (sig.getNorth() == northBlock)
-					 && (sig.getSouth() == southBlock)
-					 && (sig.getEast() == eastBlock)
-					 && (sig.getWest() == westBlock);
+		boolean match = (sig.north == north)
+					 && (sig.south == south)
+					 && (sig.east == east)
+					 && (sig.west == west);
 		return match;
 	}
 	
@@ -66,17 +46,13 @@ public class Signature implements Serializable {
 		return false;
 	}
 	
-	public int hashCode() {
-        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
-        	append(northBlock).
-        	append(southBlock).
-        	append(eastBlock).
-        	append(westBlock).
-            toHashCode();
-    }
-	
-	public static long getSerialVersionUID() {
-		return serialVersionUID;
-	}
+//	public int hashCode() {
+//        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+//        	append(northBlock).
+//        	append(southBlock).
+//        	append(eastBlock).
+//        	append(westBlock).
+//            toHashCode();
+//    }
 	
 }
