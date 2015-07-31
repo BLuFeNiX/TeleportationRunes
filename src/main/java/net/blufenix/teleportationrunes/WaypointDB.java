@@ -6,7 +6,6 @@ import org.bukkit.World;
 
 import java.io.File;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 /**
@@ -55,26 +54,9 @@ public class WaypointDB extends SimpleDatabase {
                 sig.north.name(), sig.south.name(), sig.east.name(), sig.west.name());
         ResultSet rs = query(sql);
         try {
-
-            ResultSetMetaData metaData = rs.getMetaData();
-
-            TeleportationRunes.getInstance().getLogger().info("TYPE 1: "+metaData.getColumnTypeName(1));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 2: "+metaData.getColumnTypeName(2));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 3: "+metaData.getColumnTypeName(3));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 4: "+metaData.getColumnTypeName(4));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 5: "+metaData.getColumnTypeName(5));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 6: "+metaData.getColumnTypeName(6));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 7: "+metaData.getColumnTypeName(7));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 8: "+metaData.getColumnTypeName(8));
-            TeleportationRunes.getInstance().getLogger().info("TYPE 9: "+metaData.getColumnTypeName(9));
-
             if (rs.next()) {
-
-
                 String user = rs.getString(1);
-                TeleportationRunes.getInstance().getLogger().info("USER: "+user);
                 String worldName = rs.getString(2);
-                TeleportationRunes.getInstance().getLogger().info("WORLD: "+worldName);
                 int x = rs.getInt(3);
                 int y = rs.getInt(4);
                 int z = rs.getInt(5);

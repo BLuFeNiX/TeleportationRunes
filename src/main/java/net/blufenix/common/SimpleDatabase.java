@@ -3,6 +3,9 @@ package net.blufenix.common;
 import net.blufenix.teleportationrunes.TeleportationRunes;
 
 import java.sql.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
 
 /**
  * Created by blufenix on 7/27/15.
@@ -11,7 +14,8 @@ public class SimpleDatabase {
 
     private static final String BASE_PATH = TeleportationRunes.getInstance().getDataFolder().getAbsolutePath();
 
-    Connection connection = null;
+    private final Queue<Connection> connectionPool = new ConcurrentLinkedQueue<Connection>();
+    private final int numInitialConnections = 0;
 
     private final String DB_FILE_PATH;
     private final String DB_URL;
@@ -20,24 +24,50 @@ public class SimpleDatabase {
         this.DB_FILE_PATH = BASE_PATH + "/" + filename;
         this.DB_URL = "jdbc:sqlite:"+DB_FILE_PATH;
         loadDriver();
-        openConnection();
+        openConnections();
     }
 
-    // TODO close connection (when?)
-    // TODO connection pool
+    private void openConnections() {
+        for (int i = 0; i < numInitialConnections; i++) {
+            connectionPool.add(getNewConnection());
+        }
+    }
 
-    private void openConnection() {
+    public void closeConnections() {
         try {
-            connection = DriverManager.getConnection(DB_URL);
+            for (Connection con : connectionPool) {
+                if (con != null) {
+                    con.close();
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    private Connection borrowConnection() {
+        if (!connectionPool.isEmpty()) {
+            Connection con = connectionPool.remove();
+            if (con != null) {
+                return con;
+            }
+            else {
+                TeleportationRunes.getInstance().getLogger().log(Level.WARNING, "NULL connection returned from queue.");
+            }
+        }
+        return getNewConnection();
+    }
+
+    private void returnConnection(Connection con) {
+        connectionPool.add(con);
+    }
+
+    private Connection getNewConnection() {
+        TeleportationRunes.getInstance().getLogger().log(Level.INFO, "Creating new database connection: "+connectionPool.size()+1);
+        try {
+            return DriverManager.getConnection(DB_URL);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-//        try {
-//            if (connection != null) {
-//                connection.close();
-//            }
-//        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
     }
 
     private static void loadDriver() {
@@ -65,8 +95,9 @@ public class SimpleDatabase {
     }
 
     private Object rawQuery(StatementType statementType, String sql) {
-        TeleportationRunes.getInstance().getLogger().info("SQL: "+sql);
+        TeleportationRunes.getInstance().getLogger().log(Level.FINE, "Executing SQL: "+sql);
 
+        Connection connection = borrowConnection();
         try {
             Statement stmt = connection.createStatement();
 
@@ -80,6 +111,11 @@ public class SimpleDatabase {
             }
 
         } catch (SQLException e1) { e1.printStackTrace(); }
+        finally {
+            if (connection != null) {
+                returnConnection(connection);
+            }
+        }
 
         return null;
     }

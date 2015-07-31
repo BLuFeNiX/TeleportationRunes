@@ -61,6 +61,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 	
 	public void onDisable() {
+        db.closeConnections();
 		this.getLogger().info("TeleportationRunes has been unloaded!");
 	}
 	
