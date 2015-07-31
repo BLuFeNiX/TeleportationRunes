@@ -30,28 +30,41 @@ public class WaypointDB extends SimpleDatabase {
                 "y INTEGER NOT NULL, " +
                 "z INTEGER NOT NULL, " +
                 "north STRING NOT NULL, " +
+                "north_data INTEGER NOT NULL, " +
                 "south STRING NOT NULL, " +
+                "south_data INTEGER NOT NULL, " +
                 "east STRING NOT NULL, " +
-                "west STRING NOT NULL)");
+                "east_data INTEGER NOT NULL, " +
+                "west STRING NOT NULL," +
+                "west_data INTEGER NOT NULL)");
     }
 
     public boolean addWaypoint(Waypoint waypoint) {
-        String sql = String.format("INSERT INTO waypoints VALUES ('%s', '%s', %d, %d, %d, '%s', '%s', '%s', '%s')",
+        String sql = String.format("INSERT INTO waypoints VALUES ('%s', '%s', %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', %d)",
                 waypoint.user, waypoint.loc.getWorld().getName(),
                 (int)waypoint.loc.getX(), (int)waypoint.loc.getY(), (int)waypoint.loc.getZ(),
-                waypoint.sig.north.name(), waypoint.sig.south.name(), waypoint.sig.east.name(), waypoint.sig.west.name());
+                waypoint.sig.north.getType().name(), waypoint.sig.north.getData().getData(),
+                waypoint.sig.south.getType().name(), waypoint.sig.south.getData().getData(),
+                waypoint.sig.east.getType().name(), waypoint.sig.east.getData().getData(),
+                waypoint.sig.west.getType().name(), waypoint.sig.west.getData().getData());
         return execute(sql);
     }
 
     public boolean removeWaypoint(Waypoint waypoint) {
-        String sql = String.format("DELETE FROM waypoints WHERE north = '%s' AND south = '%s' AND east = '%s' AND west = '%s'",
-                waypoint.sig.north.name(), waypoint.sig.south.name(), waypoint.sig.east.name(), waypoint.sig.west.name());
+        String sql = String.format("DELETE FROM waypoints WHERE north = '%s' AND north_data = %d AND south = '%s' AND south_data = %d AND east = '%s' AND east_data = %d AND west = '%s' AND west_data = %d",
+                waypoint.sig.north.getType().name(), waypoint.sig.north.getData().getData(),
+                waypoint.sig.south.getType().name(), waypoint.sig.south.getData().getData(),
+                waypoint.sig.east.getType().name(), waypoint.sig.east.getData().getData(),
+                waypoint.sig.west.getType().name(), waypoint.sig.west.getData().getData());
         return execute(sql);
     }
 
     public Waypoint getWaypointFromSignature(Signature sig) {
-        String sql = String.format("SELECT * FROM waypoints WHERE north = '%s' AND south = '%s' AND east = '%s' AND west = '%s'",
-                sig.north.name(), sig.south.name(), sig.east.name(), sig.west.name());
+        String sql = String.format("SELECT * FROM waypoints WHERE north = '%s' AND north_data = %d AND south = '%s' AND south_data = %d AND east = '%s' AND east_data = %d AND west = '%s' AND west_data = %d",
+                sig.north.getType().name(), sig.north.getData().getData(),
+                sig.south.getType().name(), sig.south.getData().getData(),
+                sig.east.getType().name(), sig.east.getData().getData(),
+                sig.west.getType().name(), sig.west.getData().getData());
         ResultSet rs = query(sql);
         try {
             if (rs.next()) {

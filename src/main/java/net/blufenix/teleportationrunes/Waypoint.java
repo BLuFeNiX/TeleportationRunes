@@ -11,7 +11,7 @@ public class Waypoint {
     public final Location loc;
     public final Signature sig;
 
-    public Waypoint(String user, Location loc, Signature sig) {
+    public Waypoint(final String user, final Location loc, final Signature sig) {
         this.user = user;
         this.loc = loc;
         this.sig = sig;

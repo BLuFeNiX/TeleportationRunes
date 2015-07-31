@@ -1,16 +1,19 @@
 package net.blufenix.teleportationrunes;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.block.BlockState;
 
+/**
+ * Represents the 4 blocks that act as the unique key between a waypoint and its teleporters
+ */
 public class Signature {
 
-	public final Material north;
-	public final Material south;
-	public final Material east;
-	public final Material west;
+	public final BlockState north;
+	public final BlockState south;
+	public final BlockState east;
+	public final BlockState west;
 
-	public Signature(Material north, Material south, Material east, Material west) {
+	public Signature(BlockState north, BlockState south, BlockState east, BlockState west) {
 		this.north = north;
 		this.south = south;
 		this.east = east;
@@ -18,19 +21,19 @@ public class Signature {
 	}
 
 	public static Signature fromLocation(Location loc) {
-		Material north = loc.clone().add(0, 0, -1).getBlock().getType();
-		Material south = loc.clone().add(0, 0, 1).getBlock().getType();
-		Material east = loc.clone().add(1, 0, 0).getBlock().getType();
-		Material west = loc.clone().add(-1, 0, 0).getBlock().getType();
+		BlockState north = loc.clone().add(0, 0, -1).getBlock().getState();
+        BlockState south = loc.clone().add(0, 0, 1).getBlock().getState();
+        BlockState east = loc.clone().add(1, 0, 0).getBlock().getState();
+        BlockState west = loc.clone().add(-1, 0, 0).getBlock().getState();
 		Signature sig = new Signature(north, south, east, west);
 		return sig;
 	}
 	
 	public boolean equals(Signature sig) {
-		boolean match = (sig.north == north)
-					 && (sig.south == south)
-					 && (sig.east == east)
-					 && (sig.west == west);
+		boolean match = (sig.north.equals(north))
+					 && (sig.south.equals(south))
+					 && (sig.east.equals(east))
+					 && (sig.west.equals(west));
 		return match;
 	}
 	
@@ -45,14 +48,5 @@ public class Signature {
 		
 		return false;
 	}
-	
-//	public int hashCode() {
-//        return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
-//        	append(northBlock).
-//        	append(southBlock).
-//        	append(eastBlock).
-//        	append(westBlock).
-//            toHashCode();
-//    }
 	
 }

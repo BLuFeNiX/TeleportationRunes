@@ -13,9 +13,9 @@ import java.util.logging.Level;
 public class SimpleDatabase {
 
     private static final String BASE_PATH = TeleportationRunes.getInstance().getDataFolder().getAbsolutePath();
+    private static final int NUM_INITIAL_CONNECTIONS = 0;
 
     private final Queue<Connection> connectionPool = new ConcurrentLinkedQueue<Connection>();
-    private final int numInitialConnections = 0;
 
     private final String DB_FILE_PATH;
     private final String DB_URL;
@@ -27,8 +27,16 @@ public class SimpleDatabase {
         openConnections();
     }
 
+    private static void loadDriver() {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void openConnections() {
-        for (int i = 0; i < numInitialConnections; i++) {
+        for (int i = 0; i < NUM_INITIAL_CONNECTIONS; i++) {
             connectionPool.add(getNewConnection());
         }
     }
@@ -68,14 +76,6 @@ public class SimpleDatabase {
             e.printStackTrace();
         }
         return null;
-    }
-
-    private static void loadDriver() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     public String getDatabaseFilePath() {
