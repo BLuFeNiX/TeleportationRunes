@@ -71,10 +71,10 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
-	    if (isTeleporter(blockClicked)) {
+	    if (BlockUtil.isTeleporter(blockClicked)) {
 	    	attemptTeleport(player, blockLocation);
 	    }
-	    else if (isTemporaryTeleporter(blockClicked)) {
+	    else if (BlockUtil.isTemporaryTeleporter(blockClicked)) {
 	    	// go one block down for temporary teleporters
 	    	// since redstone will sit on top
 	    	if (attemptTeleport(player, blockLocation.clone().add(0, -1, 0))) { 
@@ -91,7 +91,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    		blockClicked.getRelative(-1, 0, 0).setType(Material.AIR);
 	    	}
 	    }
-	    else if (isWaypoint(blockClicked)) {
+	    else if (BlockUtil.isWaypoint(blockClicked)) {
 	    	Signature sig = Signature.fromLocation(blockLocation);
 	    	// register waypoint
 			Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
@@ -102,7 +102,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	else if (existingWaypoint.loc.equals(blockLocation)) {
 	    		player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 	    	}
-	    	else if (!isWaypoint(existingWaypoint.loc.getBlock()) || !sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+	    	else if (!BlockUtil.isWaypoint(existingWaypoint.loc.getBlock()) || !sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
 				// TODO change remove/add to update
 				db.removeWaypoint(existingWaypoint);
 				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
@@ -126,7 +126,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     	}
     	
     	// make sure the waypoint hasn't been destroyed
-    	if (!isWaypoint(existingWaypoint.loc.getBlock())) {
+    	if (!BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) {
 			player.sendMessage(StringResources.WAYPOINT_DAMAGED);
 			db.removeWaypoint(existingWaypoint);
 			return false;
@@ -140,7 +140,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     	}
     	
     	// make sure teleport destination won't suffocate the player
-    	if (!isSafe(existingWaypoint.loc)) {
+    	if (!BlockUtil.isSafe(existingWaypoint.loc)) {
     		player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
     		return false;
     	}
@@ -170,7 +170,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     		.build();
 
     		int fee = (int) Math.ceil(calc.calculate());
-    		int currentExp = getTotalExp(player);
+    		int currentExp = PlayerUtil.getTotalExp(player);
 
     		if (currentExp >= fee) {
     			// subtract EXP
@@ -215,33 +215,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     	}
 	}
 
-	private boolean isSafe(Location loc) {
-		Material block1 = loc.clone().add(0, 1, 0).getBlock().getType();
-		Material block2 = loc.clone().add(0, 2, 0).getBlock().getType();
-		
-		if ((block1.compareTo(Material.AIR) == 0 || block1.compareTo(Material.WATER) == 0)
-		 && (block2.compareTo(Material.AIR) == 0 || block2.compareTo(Material.WATER) == 0)) {
-			return true;
-		}
-		
-		return false;
-	}
-
-	private int getTotalExp(Player player) {
-		double level = player.getLevel()+player.getExp();
-		int exp = 0;
-		if (level < 16) {
-			exp = (int) (Math.round(level*17));
-		}
-		else if (level < 31) {
-			exp = (int) (Math.round(1.5*(level*level)-(29.5*level)+360));
-		}
-		else {
-			exp = (int) (Math.round(3.5*(level*level)-(151.5*level)+2220));
-		}
-		return exp;
-	}
-
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		switch (cmd.getName()) {
             case "tr":
@@ -260,62 +233,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
                 }
 		}
 
-		return false;
-	}
-	
-	/*
-	 * Checks blocks for pattern:
-	 * 		|R|?|R|
-	 * 		|?|R|?|
-	 * 		|R|?|R|
-	 */
-	boolean isTeleporter(Block block) {
-		Location loc = block.getLocation();
-		if ((block.getType() == Material.REDSTONE_BLOCK)
-		&& (loc.clone().add(-1, 0, -1)).getBlock().getType() == Material.REDSTONE_BLOCK
-		&& (loc.clone().add(-1, 0, 1)).getBlock().getType() == Material.REDSTONE_BLOCK
-		&& (loc.clone().add(1, 0, -1)).getBlock().getType() == Material.REDSTONE_BLOCK
-		&& (loc.clone().add(1, 0, 1)).getBlock().getType() == Material.REDSTONE_BLOCK) {
-			return true;
-		}
-		
-		return false;
-	}
-	
-	boolean isTemporaryTeleporter(Block block) {
-		Location loc = block.getLocation();
-		if ((block.getType() == Material.REDSTONE_WIRE)
-		&& (loc.clone().add(-1, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(-1, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(1, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(1, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
-		
-		&& (loc.clone().add(0, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(1, 0, 0)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(0, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-		&& (loc.clone().add(-1, 0, 0)).getBlock().getType() == Material.REDSTONE_WIRE) {
-			return true;
-		}
-		
-		return false;
-	}
-	
-	/*
-	 * Checks blocks for pattern:
-	 * 		|L|?|L|
-	 * 		|?|L|?|
-	 * 		|L|?|L|
-	 */
-	boolean isWaypoint(Block block) {
-		Location loc = block.getLocation();
-		if ((block.getType() == Material.LAPIS_BLOCK)
-		&& (loc.clone().add(-1, 0, -1)).getBlock().getType() == Material.LAPIS_BLOCK
-		&& (loc.clone().add(-1, 0, 1)).getBlock().getType() == Material.LAPIS_BLOCK
-		&& (loc.clone().add(1, 0, -1)).getBlock().getType() == Material.LAPIS_BLOCK
-		&& (loc.clone().add(1, 0, 1)).getBlock().getType() == Material.LAPIS_BLOCK) {
-			return true;
-		}
-				
 		return false;
 	}
 
