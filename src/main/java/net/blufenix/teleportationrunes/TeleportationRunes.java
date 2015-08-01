@@ -27,42 +27,30 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		return _instance;
 	}
 
-	@SuppressWarnings("unchecked")
-	public void onEnable() {
-		_instance = this;
-		this.saveDefaultConfig();
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        _instance = this;
         JarUtils.loadLibs();
+        Config.init(this);
+    }
 
-		if (this.getConfig().getBoolean("TeleportationRunes.enabled") == true) {
+	public void onEnable() {
+		if (Config.enabled) {
             db = new WaypointDB();
-			
-/*			// check for (and remove) broken waypoints
-			Iterator<Entry<Signature2, LocationWrapper>> it = waypoints.entrySet().iterator();
-			while (it.hasNext()) {
-				Entry<Signature2, LocationWrapper> entry = it.next();
-				Location loc = waypoints.get(entry.getKey()).getLoc();
-				// remove broken
-				if (!isWaypoint(loc.getBlock())) {
-					it.remove();
-				} // remove changed 
-				else if (!entry.getKey().equals(Signature2.getSignatureFromLocation(loc))) {
-					it.remove();
-				}
-			}*/
-			
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
-			this.getLogger().info("TeleportationRunes has been loaded!");
+			this.getLogger().info(StringResources.LOADED);
 		}
 		else {
-			this.getLogger().info("TeleportationRunes is disabled!");
+			this.getLogger().info(StringResources.DISABLED);
 			this.getServer().getPluginManager().disablePlugin(this);
 		}
 	}
 	
 	public void onDisable() {
         db.closeConnections();
-		this.getLogger().info("TeleportationRunes has been unloaded!");
+		this.getLogger().info(StringResources.UNLOADED);
 	}
 	
 	@EventHandler
@@ -75,7 +63,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    
 	    if(player.isInsideVehicle()) {
 	    	if( !(player.getVehicle() instanceof Horse) ) {
-	    		player.sendMessage(ChatColor.RED+"Teleportation failed. You must be on foot or riding a horse to teleport.");
+	    		player.sendMessage(StringResources.BAD_VEHICLE);
 	    		return;
 	    	}
 	    }
@@ -109,19 +97,19 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
 	    	if (existingWaypoint == null) {
 	    		db.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
-	    		player.sendMessage(ChatColor.GREEN+"Waypoint activated!");
+	    		player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
 	    	}
 	    	else if (existingWaypoint.loc.equals(blockLocation)) {
-	    		player.sendMessage(ChatColor.RED+"This waypoint is already active.");
+	    		player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 	    	}
 	    	else if (!isWaypoint(existingWaypoint.loc.getBlock()) || !sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
 				// TODO change remove/add to update
 				db.removeWaypoint(existingWaypoint);
 				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
-	    		player.sendMessage(ChatColor.GREEN+"Old waypoint was altered or damaged. New waypoint activated!");
+	    		player.sendMessage(StringResources.WAYPOINT_CHANGED);
 	    	}
 	    	else {
-	    		player.sendMessage(ChatColor.RED+"This waypoint signature has already been used. You must change the signature in order to activate this waypoint.");
+	    		player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
 	    	}
 	    }
 
@@ -133,33 +121,33 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
         // is there a waypoint matching this teleporter?
     	if (existingWaypoint == null) {
-    		player.sendMessage(ChatColor.RED+"There is no waypoint with this signature.");
+    		player.sendMessage(StringResources.WAYPOINT_NOT_FOUND);
     		return false;
     	}
     	
     	// make sure the waypoint hasn't been destroyed
     	if (!isWaypoint(existingWaypoint.loc.getBlock())) {
-			player.sendMessage(ChatColor.RED+"The waypoint you desire has been damaged or destroyed. You must repair the waypoint or create a new one.");
+			player.sendMessage(StringResources.WAYPOINT_DAMAGED);
 			db.removeWaypoint(existingWaypoint);
 			return false;
 		}
     		
     	// make sure the signature hasn't changed
     	if (!existingWaypoint.sig.equals(sig)) {
-    		player.sendMessage(ChatColor.RED+"The waypoint's signature has been altered. Teleporter unlinked.");
+    		player.sendMessage(StringResources.WAYPOINT_ALTERED);
             db.removeWaypoint(existingWaypoint);
 			return false;
     	}
     	
     	// make sure teleport destination won't suffocate the player
     	if (!isSafe(existingWaypoint.loc)) {
-    		player.sendMessage(ChatColor.RED+"Teleportation failed. Destination is obstructed.");
+    		player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
     		return false;
     	}
     				
     	// is the destination in our current world?
     	if (!existingWaypoint.loc.getWorld().equals(blockLocation.getWorld())) {
-    		player.sendMessage(ChatColor.RED+"You cannot teleport between worlds.");
+    		player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
     		return false;
     	}
     	
@@ -173,9 +161,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     		int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - blockLocation.getBlockZ());
     		int numEntities = (player.isInsideVehicle() && player.getVehicle() instanceof Horse) ? 2 : 1;
 
-    		String costFormula = this.getConfig().getString("TeleportationRunes.costFormula");
-
-    		Calculable calc = new ExpressionBuilder(costFormula)
+    		Calculable calc = new ExpressionBuilder(Config.costFormula)
     		.withVariable("distance", distance)
     		.withVariable("deltaX", deltaX)
     		.withVariable("deltaY", deltaY)
@@ -257,46 +243,23 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("tr")) { // If the player typed /tr then do the following...
-			if (sender.isOp()) {
-				if (args.length > 0) {
-					if (args[0].equalsIgnoreCase("reload")) {
-						this.reloadConfig();
-						sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
-						return true;
-					}
-					else if (args[0].equalsIgnoreCase("list")) {
-						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
-                        sender.sendMessage("Not yet implemented.");
-//						for (Entry<Signature2, LocationWrapper> entry : waypoints.entrySet()) {
-//							Material n = entry.getKey().getNorth();
-//							Material s = entry.getKey().getSouth();
-//							Material e = entry.getKey().getEast();
-//							Material w = entry.getKey().getWest();
-//							Location loc = entry.getValue().getLoc();
-//							sender.sendMessage(ChatColor.GOLD+"Waypoint:");
-//							sender.sendMessage("   North: "+n);
-//							sender.sendMessage("   South: "+s);
-//							sender.sendMessage("   East: "+e);
-//							sender.sendMessage("   West: "+w);
-//							sender.sendMessage("   Location: "+loc.getX()+", "+loc.getY()+", "+loc.getZ()+"\n");
-//						}
-						sender.sendMessage(ChatColor.GOLD+"--------------------------------------------------");
-						return true;
-					}
-					else {
-						return false;
-					}
-				}
-				else {
-					return false;
-				}
-			}
-			else {
-				sender.sendMessage(ChatColor.GOLD+"You are not an OP!");
-				return true;
-			}
-		} 
+		switch (cmd.getName()) {
+            case "tr":
+                if (args.length == 0) {
+                    return false;
+                }
+                else if (!sender.isOp()) {
+                    sender.sendMessage(ChatColor.GOLD+"You are not an OP!");
+                    return true;
+                } else if (args[0].equalsIgnoreCase("reload")) {
+                    Config.reload();
+                    sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
+                    return true;
+                } else {
+                    return false;
+                }
+		}
+
 		return false;
 	}
 	
