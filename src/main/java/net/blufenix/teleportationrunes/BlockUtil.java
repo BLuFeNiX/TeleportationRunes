@@ -30,16 +30,16 @@ public class BlockUtil {
 
     public static boolean isTemporaryTeleporter(Block block) {
         Location loc = block.getLocation();
-        if ((block.getType() == Material.REDSTONE_WIRE)
-                && (loc.clone().add(-1, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(-1, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(1, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(1, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
+        if ((block.getType() == Config.tempTeleporterMaterial)
+                && (loc.clone().add(-1, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(-1, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(1, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(1, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
 
-                && (loc.clone().add(0, 0, 1)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(1, 0, 0)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(0, 0, -1)).getBlock().getType() == Material.REDSTONE_WIRE
-                && (loc.clone().add(-1, 0, 0)).getBlock().getType() == Material.REDSTONE_WIRE) {
+                && (loc.clone().add(0, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(1, 0, 0)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(0, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
+                && (loc.clone().add(-1, 0, 0)).getBlock().getType() == Config.tempTeleporterMaterial) {
             return true;
         }
 
@@ -77,4 +77,16 @@ public class BlockUtil {
         return false;
     }
 
+    public static void deleteTemporaryTeleporter(Block block) {
+        block.setType(Material.AIR);
+        block.getRelative(-1, 0, -1).setType(Material.AIR);
+        block.getRelative(-1, 0, 1).setType(Material.AIR);
+        block.getRelative(1, 0, -1).setType(Material.AIR);
+        block.getRelative(1, 0, 1).setType(Material.AIR);
+
+        block.getRelative(0, 0, 1).setType(Material.AIR);
+        block.getRelative(0, 0, -1).setType(Material.AIR);
+        block.getRelative(1, 0, 0).setType(Material.AIR);
+        block.getRelative(-1, 0, 0).setType(Material.AIR);
+    }
 }

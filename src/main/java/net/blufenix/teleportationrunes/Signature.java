@@ -30,10 +30,10 @@ public class Signature {
 	}
 	
 	public boolean equals(Signature sig) {
-		boolean match = (sig.north.equals(north))
-					 && (sig.south.equals(south))
-					 && (sig.east.equals(east))
-					 && (sig.west.equals(west));
+		boolean match = (sig.north.getType().equals(north.getType()))
+					 && (sig.south.getType().equals(south.getType()))
+					 && (sig.east.getType().equals(east.getType()))
+					 && (sig.west.getType().equals(west.getType()));
 		return match;
 	}
 	

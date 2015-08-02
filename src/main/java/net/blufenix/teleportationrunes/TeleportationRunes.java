@@ -6,7 +6,6 @@ import net.blufenix.common.JarUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -77,18 +76,9 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    else if (BlockUtil.isTemporaryTeleporter(blockClicked)) {
 	    	// go one block down for temporary teleporters
 	    	// since redstone will sit on top
-	    	if (attemptTeleport(player, blockLocation.clone().add(0, -1, 0))) { 
+	    	if (attemptTeleport(player, blockLocation.clone().add(0, -1, 0))) {
 	    		// remove redstone
-	    		blockClicked.setType(Material.AIR);
-	    		blockClicked.getRelative(-1, 0, -1).setType(Material.AIR);
-	    		blockClicked.getRelative(-1, 0, 1).setType(Material.AIR);
-	    		blockClicked.getRelative(1, 0, -1).setType(Material.AIR);
-	    		blockClicked.getRelative(1, 0, 1).setType(Material.AIR);
-	    		
-	    		blockClicked.getRelative(0, 0, 1).setType(Material.AIR);
-	    		blockClicked.getRelative(0, 0, -1).setType(Material.AIR);
-	    		blockClicked.getRelative(1, 0, 0).setType(Material.AIR);
-	    		blockClicked.getRelative(-1, 0, 0).setType(Material.AIR);
+	    		BlockUtil.deleteTemporaryTeleporter(blockClicked);
 	    	}
 	    }
 	    else if (BlockUtil.isWaypoint(blockClicked)) {
@@ -133,8 +123,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		}
     		
     	// make sure the signature hasn't changed
-    	if (!existingWaypoint.sig.equals(sig)) {
-    		player.sendMessage(StringResources.WAYPOINT_ALTERED);
+    	if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+            player.sendMessage(StringResources.WAYPOINT_ALTERED);
             db.removeWaypoint(existingWaypoint);
 			return false;
     	}
@@ -151,7 +141,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     		return false;
     	}
     	
-    	// calculate teleport distance			
+    	// calculate teleport distance
     	double distance = existingWaypoint.loc.distance(blockLocation);
 
     	try {

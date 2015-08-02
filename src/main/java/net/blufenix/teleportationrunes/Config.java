@@ -12,6 +12,7 @@ public class Config {
     public static boolean enabled;
     public static String costFormula;
     public static Material teleporterMaterial;
+    public static Material tempTeleporterMaterial;
     public static Material waypointMaterial;
 
     private static JavaPlugin plugin;
@@ -27,6 +28,7 @@ public class Config {
         enabled = config.getBoolean("TeleportationRunes.enabled");
         costFormula = config.getString("TeleportationRunes.costFormula");
         teleporterMaterial = Material.matchMaterial(config.getString("TeleportationRunes.teleporterMaterial"));
+        tempTeleporterMaterial = Material.matchMaterial(config.getString("TeleportationRunes.tempTeleporterMaterial"));
         waypointMaterial = Material.matchMaterial(config.getString("TeleportationRunes.waypointMaterial"));
     }
 

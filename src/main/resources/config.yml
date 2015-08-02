@@ -3,6 +3,7 @@ TeleportationRunes:
   costFormula: (distance / 10)
   waypointMaterial: LAPIS_BLOCK
   teleporterMaterial: REDSTONE_BLOCK
+  tempTeleporterMaterial: REDSTONE_WIRE
 
   #
   # suggested formulas:
