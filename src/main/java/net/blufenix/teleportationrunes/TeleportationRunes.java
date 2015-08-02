@@ -9,8 +9,8 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -60,13 +60,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    
 	    Player player = event.getPlayer();
 	    
-	    if(player.isInsideVehicle()) {
-	    	if( !(player.getVehicle() instanceof Horse) ) {
-	    		player.sendMessage(StringResources.BAD_VEHICLE);
-	    		return;
-	    	}
-	    }
-	    
 	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
@@ -92,7 +85,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	else if (existingWaypoint.loc.equals(blockLocation)) {
 	    		player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 	    	}
-	    	else if (!BlockUtil.isWaypoint(existingWaypoint.loc.getBlock()) || !sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
 				// TODO change remove/add to update
 				db.removeWaypoint(existingWaypoint);
 				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
@@ -149,7 +142,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     		int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - blockLocation.getBlockX());
     		int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - blockLocation.getBlockY());
     		int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - blockLocation.getBlockZ());
-    		int numEntities = (player.isInsideVehicle() && player.getVehicle() instanceof Horse) ? 2 : 1;
+    		int numEntities = player.isInsideVehicle() ? 2 : 1;
 
     		Calculable calc = new ExpressionBuilder(Config.costFormula)
     		.withVariable("distance", distance)
@@ -173,12 +166,12 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     			Location adjustedLoc = existingWaypoint.loc.clone().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
     			player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
     			
-    			if (player.isInsideVehicle() && player.getVehicle() instanceof Horse) {
-    				Horse horse = (Horse) player.getVehicle();
-    				horse.eject();
-    				horse.teleport(adjustedLoc);
+    			if (player.isInsideVehicle()) {
+    				Vehicle vehicle = (Vehicle) player.getVehicle();
+    				vehicle.eject();
+    				vehicle.teleport(adjustedLoc);
     				player.teleport(adjustedLoc);
-    				horse.setPassenger(player);
+    				vehicle.setPassenger(player);
     			}
     			else {
     				player.teleport(adjustedLoc);
