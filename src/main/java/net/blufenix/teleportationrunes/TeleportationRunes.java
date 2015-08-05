@@ -1,16 +1,12 @@
 package net.blufenix.teleportationrunes;
 
-import de.congrace.exp4j.Calculable;
-import de.congrace.exp4j.ExpressionBuilder;
 import net.blufenix.common.JarUtils;
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Vehicle;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -20,10 +16,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	private static TeleportationRunes _instance;
-	private WaypointDB db;
+	private WaypointDB waypointDB;
 
-	public static JavaPlugin getInstance() {
+	public static TeleportationRunes getInstance() {
 		return _instance;
+	}
+
+	public WaypointDB getWaypointDB() {
+		return waypointDB;
 	}
 
     @Override
@@ -36,7 +36,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	public void onEnable() {
 		if (Config.enabled) {
-            db = new WaypointDB();
+            waypointDB = new WaypointDB();
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
 			this.getLogger().info(StringResources.LOADED);
@@ -48,7 +48,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 	
 	public void onDisable() {
-        db.closeConnections();
+        waypointDB.closeConnections();
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 	
@@ -63,15 +63,16 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
+        // TODO cancel event if teleporter/waypoint was clicked?
 	    if (BlockUtil.isTeleporter(blockClicked)) {
-	    	attemptTeleport(player, blockLocation);
+            TeleUtils.attemptTeleport(player, blockLocation);
 	    }
 	    else if (BlockUtil.isWaypoint(blockClicked)) {
 	    	Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint);
 	    	// register waypoint
-			Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
+			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
 	    	if (existingWaypoint == null) {
-	    		db.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
+	    		waypointDB.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
 	    		player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
 	    	}
 	    	else if (existingWaypoint.loc.equals(blockLocation)) {
@@ -79,8 +80,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	}
 	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
 				// TODO change remove/add to update
-				db.removeWaypoint(existingWaypoint);
-				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
+				waypointDB.removeWaypoint(existingWaypoint);
+				waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
 	    		player.sendMessage(StringResources.WAYPOINT_CHANGED);
 	    	}
 	    	else {
@@ -88,106 +89,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	}
 	    }
 
-	}
-	
-	private boolean attemptTeleport(Player player, Location blockLocation) {
-    	Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint);
-        Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
-
-        // is there a waypoint matching this teleporter?
-    	if (existingWaypoint == null) {
-    		player.sendMessage(StringResources.WAYPOINT_NOT_FOUND);
-    		return false;
-    	}
-    	
-    	// make sure the waypoint hasn't been destroyed
-    	if (!BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) {
-			player.sendMessage(StringResources.WAYPOINT_DAMAGED);
-			db.removeWaypoint(existingWaypoint);
-			return false;
-		}
-    		
-    	// make sure the signature hasn't changed
-    	if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
-            player.sendMessage(StringResources.WAYPOINT_ALTERED);
-            db.removeWaypoint(existingWaypoint);
-			return false;
-    	}
-    	
-    	// make sure teleport destination won't suffocate the player
-    	if (!BlockUtil.isSafe(existingWaypoint.loc)) {
-    		player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
-    		return false;
-    	}
-    				
-    	// is the destination in our current world?
-    	if (!existingWaypoint.loc.getWorld().equals(blockLocation.getWorld())) {
-    		player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
-    		return false;
-    	}
-    	
-    	// calculate teleport distance
-    	double distance = existingWaypoint.loc.distance(blockLocation);
-
-    	try {
-    		
-    		int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - blockLocation.getBlockX());
-    		int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - blockLocation.getBlockY());
-    		int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - blockLocation.getBlockZ());
-    		int numEntities = player.isInsideVehicle() ? 2 : 1;
-
-    		Calculable calc = new ExpressionBuilder(Config.costFormula)
-    		.withVariable("distance", distance)
-    		.withVariable("deltaX", deltaX)
-    		.withVariable("deltaY", deltaY)
-    		.withVariable("deltaZ", deltaZ)
-    		.withVariable("numEntities", numEntities)
-    		.build();
-
-    		int fee = (int) Math.ceil(calc.calculate());
-    		int currentExp = PlayerUtil.getTotalExp(player);
-
-    		if (currentExp >= fee) {
-    			// subtract EXP
-    			player.setLevel(0);
-    			player.setExp(0);
-    			player.giveExp(currentExp-fee);
-
-    			// teleport player
-    			Location playerLoc = player.getLocation();
-    			Location adjustedLoc = existingWaypoint.loc.clone().add(0.5, 1, 0.5); // teleport to the middle of the block, and one block up
-    			player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
-    			
-    			if (player.isInsideVehicle()) {
-    				Vehicle vehicle = (Vehicle) player.getVehicle();
-    				vehicle.eject();
-    				vehicle.teleport(adjustedLoc);
-    				player.teleport(adjustedLoc);
-    				vehicle.setPassenger(player);
-    			}
-    			else {
-    				player.teleport(adjustedLoc);
-    			}
-    	
-    			player.getWorld().strikeLightningEffect(adjustedLoc);
-
-    			this.getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
-    			player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
-    			player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
-    			return true;
-    		}
-    		else {
-    			player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
-    			player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
-    			player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
-    			player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
-    			return false;
-    		}
-    		
-    	} catch (Exception e) {
-    		player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
-    		return false;
-    	}
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {

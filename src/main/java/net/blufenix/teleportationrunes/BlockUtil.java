@@ -43,8 +43,8 @@ public class BlockUtil {
     }
 
     public static boolean isSafe(Location loc) {
-        Material block1 = loc.clone().add(0, 1, 0).getBlock().getType();
-        Material block2 = loc.clone().add(0, 2, 0).getBlock().getType();
+        Material block1 = loc.clone().add(Vectors.UP).getBlock().getType();
+        Material block2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
         if ((block1.compareTo(Material.AIR) == 0 || block1.compareTo(Material.WATER) == 0)
                 && (block2.compareTo(Material.AIR) == 0 || block2.compareTo(Material.WATER) == 0)) {
