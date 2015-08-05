@@ -1,9 +1,48 @@
 TeleportationRunes:
   enabled: true
   costFormula: (distance / 10)
-  waypointMaterial: LAPIS_BLOCK
-  teleporterMaterial: REDSTONE_BLOCK
   tempTeleporterMaterial: REDSTONE_WIRE
+
+  blueprint:
+    materials:
+      $: ANY_BLOCK
+
+      N: SIGNATURE_BLOCK_1
+      S: SIGNATURE_BLOCK_2
+      E: SIGNATURE_BLOCK_3
+      W: SIGNATURE_BLOCK_4
+
+      R: REDSTONE_BLOCK
+      L: LAPIS_BLOCK
+      D: DIAMOND_BLOCK
+      I: IRON_BLOCK
+
+    teleporter:
+      layers:
+        -
+          - [R,N,R]
+          - [W,D,E]
+          - [R,S,R]
+
+      clickableBlock:
+          ==: Vector
+          x: 1.0
+          y: 0.0
+          z: 1.0
+
+    waypoint:
+      layers:
+        -
+          - [L,N,L]
+          - [W,D,E]
+          - [L,S,L]
+
+      clickableBlock:
+          ==: Vector
+          x: 1.0
+          y: 0.0
+          z: 1.0
+
 
   #
   # suggested formulas:

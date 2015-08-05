@@ -66,16 +66,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    if (BlockUtil.isTeleporter(blockClicked)) {
 	    	attemptTeleport(player, blockLocation);
 	    }
-	    else if (BlockUtil.isTemporaryTeleporter(blockClicked)) {
-	    	// go one block down for temporary teleporters
-	    	// since redstone will sit on top
-	    	if (attemptTeleport(player, blockLocation.clone().add(0, -1, 0))) {
-	    		// remove redstone
-	    		BlockUtil.deleteTemporaryTeleporter(blockClicked);
-	    	}
-	    }
 	    else if (BlockUtil.isWaypoint(blockClicked)) {
-	    	Signature sig = Signature.fromLocation(blockLocation);
+	    	Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint);
 	    	// register waypoint
 			Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
 	    	if (existingWaypoint == null) {
@@ -85,7 +77,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    	else if (existingWaypoint.loc.equals(blockLocation)) {
 	    		player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 	    	}
-	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
 				// TODO change remove/add to update
 				db.removeWaypoint(existingWaypoint);
 				db.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
@@ -99,7 +91,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 	
 	private boolean attemptTeleport(Player player, Location blockLocation) {
-    	Signature sig = Signature.fromLocation(blockLocation);
+    	Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint);
         Waypoint existingWaypoint = db.getWaypointFromSignature(sig);
 
         // is there a waypoint matching this teleporter?
@@ -116,7 +108,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		}
     		
     	// make sure the signature hasn't changed
-    	if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc))) {
+    	if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
             player.sendMessage(StringResources.WAYPOINT_ALTERED);
             db.removeWaypoint(existingWaypoint);
 			return false;

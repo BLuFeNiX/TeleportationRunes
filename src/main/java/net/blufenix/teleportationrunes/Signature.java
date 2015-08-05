@@ -2,6 +2,7 @@ package net.blufenix.teleportationrunes;
 
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
+import org.bukkit.util.Vector;
 
 /**
  * Represents the 4 blocks that act as the unique key between a waypoint and its teleporters
@@ -20,14 +21,20 @@ public class Signature {
 		this.west = west;
 	}
 
-	public static Signature fromLocation(Location loc) {
-		BlockState north = loc.clone().add(0, 0, -1).getBlock().getState();
-        BlockState south = loc.clone().add(0, 0, 1).getBlock().getState();
-        BlockState east = loc.clone().add(1, 0, 0).getBlock().getState();
-        BlockState west = loc.clone().add(-1, 0, 0).getBlock().getState();
-		Signature sig = new Signature(north, south, east, west);
-		return sig;
-	}
+    public static Signature fromLocation(Location loc, Blueprint blueprint) {
+		Vector[] vectors = blueprint.getVectors();
+
+        BlockState north = loc.clone().subtract(vectors[0]).add(vectors[1]).getBlock().getState();
+        BlockState south = loc.clone().subtract(vectors[0]).add(vectors[2]).getBlock().getState();
+        BlockState east = loc.clone().subtract(vectors[0]).add(vectors[3]).getBlock().getState();
+        BlockState west = loc.clone().subtract(vectors[0]).add(vectors[4]).getBlock().getState();
+        TeleportationRunes.getInstance().getLogger().info(north.getBlock().getType().toString());
+        TeleportationRunes.getInstance().getLogger().info(south.getBlock().getType().toString());
+        TeleportationRunes.getInstance().getLogger().info(east.getBlock().getType().toString());
+        TeleportationRunes.getInstance().getLogger().info(west.getBlock().getType().toString());
+        Signature sig = new Signature(north, south, east, west);
+        return sig;
+    }
 	
 	public boolean equals(Signature sig) {
 		boolean match = (sig.north.getType().equals(north.getType()))

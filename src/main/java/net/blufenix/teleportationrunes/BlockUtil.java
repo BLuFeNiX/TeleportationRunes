@@ -3,66 +3,43 @@ package net.blufenix.teleportationrunes;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.util.Vector;
 
 /**
  * Created by blufenix on 8/1/15.
  */
 public class BlockUtil {
 
-    /*
-	 * Checks blocks for pattern:
-	 * 		|R|?|R|
-	 * 		|?|R|?|
-	 * 		|R|?|R|
-	 */
     public static boolean isTeleporter(Block block) {
-        Location loc = block.getLocation();
-        if ((block.getType() == Config.teleporterMaterial)
-                && (loc.clone().add(-1, 0, -1)).getBlock().getType() == Config.teleporterMaterial
-                && (loc.clone().add(-1, 0, 1)).getBlock().getType() == Config.teleporterMaterial
-                && (loc.clone().add(1, 0, -1)).getBlock().getType() == Config.teleporterMaterial
-                && (loc.clone().add(1, 0, 1)).getBlock().getType() == Config.teleporterMaterial) {
-            return true;
-        }
-
-        return false;
+        return isBlockAtVectorOfStructure(block, Config.teleporterBlueprint);
     }
 
-    public static boolean isTemporaryTeleporter(Block block) {
-        Location loc = block.getLocation();
-        if ((block.getType() == Config.tempTeleporterMaterial)
-                && (loc.clone().add(-1, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(-1, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(1, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(1, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
-
-                && (loc.clone().add(0, 0, 1)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(1, 0, 0)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(0, 0, -1)).getBlock().getType() == Config.tempTeleporterMaterial
-                && (loc.clone().add(-1, 0, 0)).getBlock().getType() == Config.tempTeleporterMaterial) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /*
-     * Checks blocks for pattern:
-     * 		|L|?|L|
-     * 		|?|L|?|
-     * 		|L|?|L|
-     */
     public static boolean isWaypoint(Block block) {
+        return isBlockAtVectorOfStructure(block, Config.waypointBlueprint);
+    }
+
+    private static boolean isBlockAtVectorOfStructure(Block block, Blueprint blueprint) {
         Location loc = block.getLocation();
-        if ((block.getType() == Config.waypointMaterial)
-                && (loc.clone().add(-1, 0, -1)).getBlock().getType() == Config.waypointMaterial
-                && (loc.clone().add(-1, 0, 1)).getBlock().getType() == Config.waypointMaterial
-                && (loc.clone().add(1, 0, -1)).getBlock().getType() == Config.waypointMaterial
-                && (loc.clone().add(1, 0, 1)).getBlock().getType() == Config.waypointMaterial) {
-            return true;
+        Blueprint.Block[][][] structure = blueprint.getMaterialMatrix();
+        Vector vector = blueprint.getVectors()[0];
+
+        for (int i = 0; i < structure.length; i++) {
+            Blueprint.Block[][] layer = structure[i];
+            for (int j = 0; j < layer.length; j++) {
+                Blueprint.Block[] row = structure[i][j];
+                for (int k = 0; k < row.length; k++) {
+                    Blueprint.Block bblock = row[k];
+                    if (bblock.getMaterial() != null && loc.clone().subtract(vector).add(j, -i, k).getBlock().getType() != bblock.getMaterial()) {
+                        if (blueprint == Config.waypointBlueprint) {
+                            TeleportationRunes.getInstance().getLogger().info(bblock.getMaterialName() + " IS NOT " + loc.clone().subtract(vector).add(j, -i, k).getBlock().getType().name());
+                        }
+                        return false;
+                    }
+                }
+            }
         }
 
-        return false;
+        return true;
     }
 
     public static boolean isSafe(Location loc) {
@@ -77,16 +54,4 @@ public class BlockUtil {
         return false;
     }
 
-    public static void deleteTemporaryTeleporter(Block block) {
-        block.setType(Material.AIR);
-        block.getRelative(-1, 0, -1).setType(Material.AIR);
-        block.getRelative(-1, 0, 1).setType(Material.AIR);
-        block.getRelative(1, 0, -1).setType(Material.AIR);
-        block.getRelative(1, 0, 1).setType(Material.AIR);
-
-        block.getRelative(0, 0, 1).setType(Material.AIR);
-        block.getRelative(0, 0, -1).setType(Material.AIR);
-        block.getRelative(1, 0, 0).setType(Material.AIR);
-        block.getRelative(-1, 0, 0).setType(Material.AIR);
-    }
 }
