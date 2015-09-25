@@ -20,26 +20,33 @@ TeleportationRunes:
     teleporter:
       layers:
         -
-          - [R,N,R]
-          - [W,D,E]
-          - [R,S,R]
+          - [$,$,$,R,$,$,$]
+          - [$,$,R,N,R,$,$]
+          - [$,R,R,R,R,R,$]
+          - [R,W,R,D,R,E,R]
+          - [$,R,R,R,R,R,$]
+          - [$,$,R,S,R,$,$]
+          - [$,$,$,R,$,$,$]
 
       clickableBlock:
           ==: Vector
-          x: 1.0
+          x: 3.0
           y: 0.0
-          z: 1.0
+          z: 3.0
 
     waypoint:
       layers:
         -
-          - [L,N,L]
-          - [W,D,E]
-          - [L,S,L]
+          - [$,N,$]
+          - [$,L,$]
+          - [$,L,$]
+          - [$,L,$]
+          - [$,D,$]
+          - [W,S,E]
 
       clickableBlock:
           ==: Vector
-          x: 1.0
+          x: 4.0
           y: 0.0
           z: 1.0
 

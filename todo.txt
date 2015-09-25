@@ -1,2 +1,5 @@
 setting for teleport into water
 config for custom messages and which to display
+multiple clickable blocks
+multiple destination blocks
+arbitrary rotation of structure?
