@@ -10,11 +10,15 @@ import org.bukkit.util.Vector;
  */
 public class BlockUtil {
 
+    private static final boolean DEBUG = true;
+
     public static boolean isTeleporter(Block block) {
+        if (DEBUG) TeleportationRunes.getInstance().getLogger().info("isTeleporter()?");
         return isBlockAtVectorOfStructure(block, Config.teleporterBlueprint);
     }
 
     public static boolean isWaypoint(Block block) {
+        if (DEBUG) TeleportationRunes.getInstance().getLogger().info("isWaypoint()?");
         return isBlockAtVectorOfStructure(block, Config.waypointBlueprint);
     }
 
@@ -30,9 +34,8 @@ public class BlockUtil {
                 for (int k = 0; k < row.length; k++) {
                     Blueprint.Block bblock = row[k];
                     if (bblock.getMaterial() != null && loc.clone().subtract(vector).add(j, -i, k).getBlock().getType() != bblock.getMaterial()) {
-                        if (blueprint == Config.waypointBlueprint) {
-                            TeleportationRunes.getInstance().getLogger().info(bblock.getMaterialName() + " IS NOT " + loc.clone().subtract(vector).add(j, -i, k).getBlock().getType().name());
-                        }
+                        TeleportationRunes.getInstance().getLogger().info("needed: " + bblock.getMaterialName()
+                                + " but got: " + loc.clone().subtract(vector).add(j, -i, k).getBlock().getType().name());
                         return false;
                     }
                 }
