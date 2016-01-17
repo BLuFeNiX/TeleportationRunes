@@ -5,6 +5,14 @@ TeleportationRunes:
 
   blueprint:
     materials:
+      # you can configure these in any way you want, but some characters (like a question mark, '?') will cause issues
+      # For example, do NOT do this:
+      # ?: ANY_BLOCK
+      #
+      # You don't have to use single characters, but doing so will make your teleporter/waypoint layers much easier to read
+      # For example, this is valid, but really ugly:
+      # MyFourthBlock: SIGNATURE_BLOCK_4
+
       $: ANY_BLOCK
 
       N: SIGNATURE_BLOCK_1
@@ -20,33 +28,26 @@ TeleportationRunes:
     teleporter:
       layers:
         -
-          - [$,$,$,R,$,$,$]
-          - [$,$,R,N,R,$,$]
-          - [$,R,R,R,R,R,$]
-          - [R,W,R,D,R,E,R]
-          - [$,R,R,R,R,R,$]
-          - [$,$,R,S,R,$,$]
-          - [$,$,$,R,$,$,$]
+          - [R,N,R]
+          - [W,R,E]
+          - [R,S,R]
 
       clickableBlock:
           ==: Vector
-          x: 3.0
+          x: 1.0
           y: 0.0
-          z: 3.0
+          z: 1.0
 
     waypoint:
       layers:
         -
-          - [$,N,$]
-          - [$,L,$]
-          - [$,L,$]
-          - [$,L,$]
-          - [$,D,$]
-          - [W,S,E]
+          - [L,N,L]
+          - [W,L,E]
+          - [L,S,L]
 
       clickableBlock:
           ==: Vector
-          x: 4.0
+          x: 1.0
           y: 0.0
           z: 1.0
 

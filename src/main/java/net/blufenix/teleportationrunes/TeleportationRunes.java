@@ -76,14 +76,15 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
-        // TODO cancel event if teleporter/waypoint was clicked?
-	    if (BlockUtil.isTeleporter(blockClicked)) {
+        // TODO cancel event if teleporter/waypoint was clicked? (as in, cancel other plugins' events?)
+		int rotation;
+	    if ( (rotation = BlockUtil.isTeleporter(blockClicked)) >= 0) {
 			if (DEBUG) this.getLogger().info("teleporter clicked!");
-            TeleUtils.attemptTeleport(player, blockLocation);
+            TeleUtils.attemptTeleport(player, blockLocation, rotation);
 	    }
-	    else if (BlockUtil.isWaypoint(blockClicked)) {
+	    else if ( (rotation = BlockUtil.isWaypoint(blockClicked)) >= 0) {
 			if (DEBUG) this.getLogger().info("waypoint clicked!");
-	    	Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint);
+			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
 	    	// register waypoint
 			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
 	    	if (existingWaypoint == null) {
@@ -95,17 +96,17 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				if (DEBUG) this.getLogger().info("clicked waypoint exists in DB, and location matches.");
 	    		player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 	    	}
-	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
-				if (DEBUG) this.getLogger().info("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
-				// TODO change remove/add to update
-				waypointDB.removeWaypoint(existingWaypoint);
-				waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
-	    		player.sendMessage(StringResources.WAYPOINT_CHANGED);
-	    	}
-	    	else {
-				if (DEBUG) this.getLogger().info("waypoint with this signature already exists, not registering this one");
-	    		player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
-	    	}
+	    	else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(rotation)))) {
+                if (DEBUG) this.getLogger().info("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
+                // TODO change remove/add to update
+                waypointDB.removeWaypoint(existingWaypoint);
+                waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
+                player.sendMessage(StringResources.WAYPOINT_CHANGED);
+            }
+            else {
+                if (DEBUG) this.getLogger().info("waypoint with this signature already exists, not registering this one");
+                player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+            }
 	    }
 		else {
 			if (DEBUG) this.getLogger().info("neither teleporter nor waypoint clicked");

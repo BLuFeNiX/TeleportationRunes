@@ -13,10 +13,10 @@ import org.bukkit.entity.Vehicle;
  */
 public class TeleUtils {
 
-    public static boolean attemptTeleport(Player player, Location blockLocation) {
+    public static boolean attemptTeleport(Player player, Location blockLocation, int rotation) {
         WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
 
-        Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint);
+        Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint.atRotation(rotation));
         Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
 
         // is there a waypoint matching this teleporter?
@@ -26,14 +26,15 @@ public class TeleUtils {
         }
 
         // make sure the waypoint hasn't been destroyed
-        if (!BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) {
+        int waypointRotation;
+        if ( (waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) < 0) {
             player.sendMessage(StringResources.WAYPOINT_DAMAGED);
             waypointDB.removeWaypoint(existingWaypoint);
             return false;
         }
 
         // make sure the signature hasn't changed
-        if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint))) {
+        if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(waypointRotation)))) {
             player.sendMessage(StringResources.WAYPOINT_ALTERED);
             waypointDB.removeWaypoint(existingWaypoint);
             return false;

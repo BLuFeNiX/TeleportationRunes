@@ -21,13 +21,14 @@ public class Signature {
 		this.west = west;
 	}
 
-    public static Signature fromLocation(Location loc, Blueprint blueprint) {
-		Vector[] vectors = blueprint.getVectors();
+    public static Signature fromLocation(Location loc, Blueprint.RotatedBlueprint blueprint) {
+		Vector clickVector = blueprint.getClickableBlockVector();
+		Vector[] sigVectors = blueprint.getSignatureVectors();
 
-        BlockState north = loc.clone().subtract(vectors[0]).add(vectors[1]).getBlock().getState();
-        BlockState south = loc.clone().subtract(vectors[0]).add(vectors[2]).getBlock().getState();
-        BlockState east = loc.clone().subtract(vectors[0]).add(vectors[3]).getBlock().getState();
-        BlockState west = loc.clone().subtract(vectors[0]).add(vectors[4]).getBlock().getState();
+        BlockState north = loc.clone().subtract(clickVector).add(sigVectors[0]).getBlock().getState();
+        BlockState south = loc.clone().subtract(clickVector).add(sigVectors[1]).getBlock().getState();
+        BlockState east = loc.clone().subtract(clickVector).add(sigVectors[2]).getBlock().getState();
+        BlockState west = loc.clone().subtract(clickVector).add(sigVectors[3]).getBlock().getState();
         TeleportationRunes.getInstance().getLogger().info(north.getBlock().getType().toString());
         TeleportationRunes.getInstance().getLogger().info(south.getBlock().getType().toString());
         TeleportationRunes.getInstance().getLogger().info(east.getBlock().getType().toString());

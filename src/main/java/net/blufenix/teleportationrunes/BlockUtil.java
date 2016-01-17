@@ -3,6 +3,7 @@ package net.blufenix.teleportationrunes;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 /**
@@ -12,20 +13,32 @@ public class BlockUtil {
 
     private static final boolean DEBUG = true;
 
-    public static boolean isTeleporter(Block block) {
+    public static int isTeleporter(Block block) {
         if (DEBUG) TeleportationRunes.getInstance().getLogger().info("isTeleporter()?");
-        return isBlockAtVectorOfStructure(block, Config.teleporterBlueprint);
+        for (int rotation : new int[]{0,90,180,270}) {
+            if (isBlockAtVectorOfStructure(block, Config.teleporterBlueprint.atRotation(rotation))) {
+                return rotation;
+            }
+        }
+
+        return -1;
     }
 
-    public static boolean isWaypoint(Block block) {
+    public static int isWaypoint(Block block) {
         if (DEBUG) TeleportationRunes.getInstance().getLogger().info("isWaypoint()?");
-        return isBlockAtVectorOfStructure(block, Config.waypointBlueprint);
+        for (int rotation : new int[]{0,90,180,270}) {
+            if (isBlockAtVectorOfStructure(block, Config.waypointBlueprint.atRotation(rotation))) {
+                return rotation;
+            }
+        }
+
+        return -1;
     }
 
-    private static boolean isBlockAtVectorOfStructure(Block block, Blueprint blueprint) {
+    private static boolean isBlockAtVectorOfStructure(Block block, Blueprint.RotatedBlueprint blueprint) {
         Location loc = block.getLocation();
         Blueprint.Block[][][] structure = blueprint.getMaterialMatrix();
-        Vector vector = blueprint.getVectors()[0];
+        Vector vector = blueprint.getClickableBlockVector();
 
         for (int i = 0; i < structure.length; i++) {
             Blueprint.Block[][] layer = structure[i];
@@ -36,6 +49,10 @@ public class BlockUtil {
                     if (bblock.getMaterial() != null && loc.clone().subtract(vector).add(j, -i, k).getBlock().getType() != bblock.getMaterial()) {
                         TeleportationRunes.getInstance().getLogger().info("needed: " + bblock.getMaterialName()
                                 + " but got: " + loc.clone().subtract(vector).add(j, -i, k).getBlock().getType().name());
+                        // TODO REMOVE
+//                        for (Player player : loc.getWorld().getPlayers()) {
+//                            player.sendBlockChange(loc.clone().subtract(vector).add(j, -i, k), Material.LAVA.getId(), block.getData());
+//                        }
                         return false;
                     }
                 }
