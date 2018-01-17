@@ -1,7 +1,6 @@
 TeleportationRunes:
   enabled: true
   costFormula: (distance / 10)
-  tempTeleporterMaterial: REDSTONE_WIRE
 
   blueprint:
     materials:
