@@ -4,4 +4,6 @@ version: 1.9.9
 commands:
    tr:
       description: Show information about Waypoints or reload configuration.
-      usage: /<command> [ reload ]
+      usage: |
+             TeleportationRunes command usage:
+                 /<command> reload
