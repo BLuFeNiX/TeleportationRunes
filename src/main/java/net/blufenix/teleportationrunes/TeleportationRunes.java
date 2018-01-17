@@ -11,14 +11,23 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private static TeleportationRunes _instance;
 	private WaypointDB waypointDB;
+
+	// normally these would need to be thread safe, but minecraft only runs on one thread.
+    // ahahahahah hahah hah :(
+	private Set<Player> playersPendingWaypointMirage = new HashSet<>();
+	private Set<Player> playersPendingTeleporterMirage = new HashSet<>();
 
 	public static TeleportationRunes getInstance() {
 		return _instance;
@@ -53,7 +62,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
         waypointDB.closeConnections();
 		this.getLogger().info(StringResources.UNLOADED);
 	}
-	
+
 	@EventHandler
 	public void onPlayerInteractBlock(PlayerInteractEvent event) {
 
@@ -62,6 +71,12 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		// only activate on right-click
 	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
 			if (DEBUG) this.getLogger().info("player did not right click; returning.");
+			return;
+		}
+
+		// ignore off-hand click (two events per click now :P)
+		if (event.getHand() == EquipmentSlot.OFF_HAND) {
+			if (DEBUG) this.getLogger().info("ignoring off-hand click");
 			return;
 		}
 
@@ -108,8 +123,15 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
                 player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
             }
 	    }
-		else {
-			if (DEBUG) this.getLogger().info("neither teleporter nor waypoint clicked");
+		else if (DEBUG) {
+	        this.getLogger().info("neither teleporter nor waypoint clicked");
+            if (playersPendingTeleporterMirage.remove(player)) {
+				this.getLogger().info("showing waypoint mirage!");
+				BlockUtil.showMirage(player, blockClicked, Config.waypointBlueprint.atRotation(0));
+			} else if (playersPendingWaypointMirage.remove(player)) {
+				this.getLogger().info("showing teleporter mirage!");
+				BlockUtil.showMirage(player, blockClicked, Config.teleporterBlueprint.atRotation(0));
+			}
 		}
 
 	}
@@ -123,13 +145,27 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
                 else if (!sender.isOp()) {
                     sender.sendMessage(ChatColor.GOLD+"You are not an OP!");
                     return true;
-                } else if (args[0].equalsIgnoreCase("reload")) {
+				} else if ("reload".startsWith(args[0])) {
                     Config.reload();
-                    sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
-                    return true;
-                } else {
-                    return false;
-                }
+					sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
+					return true;
+				} else if (DEBUG) {
+				    if ("mirage".startsWith(args[0])) {
+                        if (!(sender instanceof Player)) {
+                            sender.sendMessage(ChatColor.RED + "Must be a player to show mirage!");
+                            return true;
+                        }
+                        if ("teleporter".startsWith(args[1])) {
+                            playersPendingTeleporterMirage.add((Player) sender);
+                            sender.sendMessage(ChatColor.GOLD + "Ready to show teleporter!");
+                            return true;
+                        } else if ("waypoint".startsWith(args[1])) {
+                            playersPendingWaypointMirage.add((Player) sender);
+                            sender.sendMessage(ChatColor.GOLD + "Ready to show waypoint!");
+                            return true;
+                        }
+                    }
+				}
 		}
 
 		return false;

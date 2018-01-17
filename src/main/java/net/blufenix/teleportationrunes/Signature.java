@@ -9,6 +9,8 @@ import org.bukkit.util.Vector;
  */
 public class Signature {
 
+	private static final boolean DEBUG = false;
+
 	public final BlockState north;
 	public final BlockState south;
 	public final BlockState east;
@@ -29,10 +31,12 @@ public class Signature {
         BlockState south = loc.clone().subtract(clickVector).add(sigVectors[1]).getBlock().getState();
         BlockState east = loc.clone().subtract(clickVector).add(sigVectors[2]).getBlock().getState();
         BlockState west = loc.clone().subtract(clickVector).add(sigVectors[3]).getBlock().getState();
-        TeleportationRunes.getInstance().getLogger().info(north.getBlock().getType().toString());
-        TeleportationRunes.getInstance().getLogger().info(south.getBlock().getType().toString());
-        TeleportationRunes.getInstance().getLogger().info(east.getBlock().getType().toString());
-        TeleportationRunes.getInstance().getLogger().info(west.getBlock().getType().toString());
+        if (DEBUG) {
+			TeleportationRunes.getInstance().getLogger().info(north.getBlock().getType().toString());
+			TeleportationRunes.getInstance().getLogger().info(south.getBlock().getType().toString());
+			TeleportationRunes.getInstance().getLogger().info(east.getBlock().getType().toString());
+			TeleportationRunes.getInstance().getLogger().info(west.getBlock().getType().toString());
+		}
         Signature sig = new Signature(north, south, east, west);
         return sig;
     }
