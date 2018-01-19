@@ -125,10 +125,10 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    }
 		else if (DEBUG) {
 	        this.getLogger().info("neither teleporter nor waypoint clicked");
-            if (playersPendingTeleporterMirage.remove(player)) {
+            if (playersPendingWaypointMirage.remove(player)) {
 				this.getLogger().info("showing waypoint mirage!");
 				BlockUtil.showMirage(player, blockClicked, Config.waypointBlueprint.atRotation(0));
-			} else if (playersPendingWaypointMirage.remove(player)) {
+			} else if (playersPendingTeleporterMirage.remove(player)) {
 				this.getLogger().info("showing teleporter mirage!");
 				BlockUtil.showMirage(player, blockClicked, Config.teleporterBlueprint.atRotation(0));
 			}

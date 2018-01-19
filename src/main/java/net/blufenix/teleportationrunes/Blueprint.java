@@ -18,56 +18,50 @@ public class Blueprint {
     private static final String SIGNATURE_BLOCK_3 = "SIGNATURE_BLOCK_3";
     private static final String SIGNATURE_BLOCK_4 = "SIGNATURE_BLOCK_4";
 
-    private final Blueprint.Block[][][] materialMatrix_0;
-    private final Blueprint.Block[][][] materialMatrix_90;
-    private final Blueprint.Block[][][] materialMatrix_180;
-    private final Blueprint.Block[][][] materialMatrix_270;
+    private final RotatedBlueprint rotatedBlueprint_0;
+    private final RotatedBlueprint rotatedBlueprint_90;
+    private final RotatedBlueprint rotatedBlueprint_180;
+    private final RotatedBlueprint rotatedBlueprint_270;
 
-    private final Vector[] signatureVectors_0;
-    private final Vector[] signatureVectors_90;
-    private final Vector[] signatureVectors_180;
-    private final Vector[] signatureVectors_270;
-
-    private final Vector clickableBlockVector_0;
-    private final Vector clickableBlockVector_90;
-    private final Vector clickableBlockVector_180;
-    private final Vector clickableBlockVector_270;
-
-    public Blueprint(ConfigurationSection blueprintSection, ConfigurationSection materialsSection) {
+    // todo error if config layers not square?
+    Blueprint(ConfigurationSection blueprintSection, ConfigurationSection materialsSection) {
         Map<String, Object> materials = materialsSection.getValues(false);
         List<List<List<String>>> layerList = (List<List<List<String>>>) blueprintSection.getList("layers");
 
-        materialMatrix_0 = constructMatrix(materials, layerList);
-        materialMatrix_90 = rotateMatrixLeft(materialMatrix_0);
-        materialMatrix_180 = rotateMatrixLeft(materialMatrix_90);
-        materialMatrix_270 = rotateMatrixLeft(materialMatrix_180);
+        Block[][][] materialMatrix_0 = constructMatrix(materials, layerList);
+        Block[][][] materialMatrix_90 = rotateMatrixLeft(materialMatrix_0);
+        Block[][][] materialMatrix_180 = rotateMatrixLeft(materialMatrix_90);
+        Block[][][] materialMatrix_270 = rotateMatrixLeft(materialMatrix_180);
 
-        signatureVectors_0 = findSignatureVectors(materialMatrix_0);
-        signatureVectors_90 = findSignatureVectors(materialMatrix_90);
-        signatureVectors_180 = findSignatureVectors(materialMatrix_180);
-        signatureVectors_270 = findSignatureVectors(materialMatrix_270);
+        Vector[] signatureVectors_0 = findSignatureVectors(materialMatrix_0);
+        Vector[] signatureVectors_90 = findSignatureVectors(materialMatrix_90);
+        Vector[] signatureVectors_180 = findSignatureVectors(materialMatrix_180);
+        Vector[] signatureVectors_270 = findSignatureVectors(materialMatrix_270);
 
-        clickableBlockVector_0 = blueprintSection.getVector("clickableBlock");
-        clickableBlockVector_90 = rotateVectorLeft(clickableBlockVector_0, materialMatrix_0[0].length);
-        clickableBlockVector_180 = rotateVectorLeft(clickableBlockVector_90, materialMatrix_90[0].length);
-        clickableBlockVector_270 = rotateVectorLeft(clickableBlockVector_180, materialMatrix_180[0].length);
+        Vector clickableBlockVector_0 = blueprintSection.getVector("clickableBlock");
+        Vector clickableBlockVector_90 = rotateVectorLeft(clickableBlockVector_0, materialMatrix_0[0].length);
+        Vector clickableBlockVector_180 = rotateVectorLeft(clickableBlockVector_90, materialMatrix_90[0].length);
+        Vector clickableBlockVector_270 = rotateVectorLeft(clickableBlockVector_180, materialMatrix_180[0].length);
 
+        rotatedBlueprint_0 = new RotatedBlueprint(materialMatrix_0, clickableBlockVector_0, signatureVectors_0);
+        rotatedBlueprint_90 = new RotatedBlueprint(materialMatrix_90, clickableBlockVector_90, signatureVectors_90);
+        rotatedBlueprint_180 = new RotatedBlueprint(materialMatrix_180, clickableBlockVector_180, signatureVectors_180);
+        rotatedBlueprint_270 = new RotatedBlueprint(materialMatrix_270, clickableBlockVector_270, signatureVectors_270);
     }
 
     public RotatedBlueprint atRotation(int degrees) {
         switch (degrees) {
             case 0:
-                return new RotatedBlueprint(materialMatrix_0, clickableBlockVector_0, signatureVectors_0);
+                return rotatedBlueprint_0;
             case 90:
-                return new RotatedBlueprint(materialMatrix_90, clickableBlockVector_90, signatureVectors_90);
+                return rotatedBlueprint_90;
             case 180:
-                return new RotatedBlueprint(materialMatrix_180, clickableBlockVector_180, signatureVectors_180);
+                return rotatedBlueprint_180;
             case 270:
-                return new RotatedBlueprint(materialMatrix_270, clickableBlockVector_270, signatureVectors_270);
-//            default:
-//                throw new Exception("degrees not in {0, 90, 180, 270}");
+                return rotatedBlueprint_270;
+            default:
+                throw new RuntimeException("degrees not in {0, 90, 180, 270}");
         }
-        return null;
     }
 
     private Vector rotateVectorLeft(Vector v, int sizeX) {
@@ -187,28 +181,16 @@ public class Blueprint {
         }
     }
 
-    protected static class RotatedBlueprint {
+    static class RotatedBlueprint {
 
-        private final Block[][][] materialMatrix;
-        private final Vector clickableVector;
-        private final Vector[] signatureVectors;
+        final Block[][][] materialMatrix;
+        final Vector clickableVector;
+        final Vector[] signatureVectors;
 
         RotatedBlueprint(Blueprint.Block[][][] materialMatrix, Vector clickableVector, Vector[] signatureVectors) {
             this.materialMatrix = materialMatrix;
             this.clickableVector = clickableVector;
             this.signatureVectors = signatureVectors;
-        }
-
-        public Blueprint.Block[][][] getMaterialMatrix() {
-            return materialMatrix;
-        }
-
-        public Vector getClickableBlockVector() {
-            return clickableVector;
-        }
-
-        public Vector[] getSignatureVectors() {
-            return signatureVectors;
         }
     }
 }

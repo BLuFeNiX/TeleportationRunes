@@ -15,7 +15,7 @@ public class WaypointDB extends SimpleDatabase {
 
     private static final String FILENAME = "waypoints.db";
 
-    public WaypointDB() {
+    WaypointDB() {
         super(FILENAME);
         if (!new File(getDatabaseFilePath()).exists()) {
             createDatabase();
