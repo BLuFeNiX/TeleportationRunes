@@ -13,11 +13,31 @@ import org.bukkit.entity.Vehicle;
  */
 public class TeleUtils {
 
+    public static Teleporter getTeleporterFromLocation(Location loc) {
+        int rotation;
+        if ((rotation = BlockUtil.isTeleporter(loc.getBlock())) >= 0) {
+            return new Teleporter(loc, rotation);
+        }
+        return null;
+    }
+
+    public static Waypoint getWaypointForTeleporter(Teleporter teleporter) {
+        WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
+        return waypointDB.getWaypointFromSignature(teleporter.sig);
+    }
+
     public static boolean attemptTeleport(Player player, Location blockLocation, int rotation) {
         WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
 
         Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint.atRotation(rotation));
         Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
+
+        return attemptTeleport(player, blockLocation, existingWaypoint);
+    }
+
+    public static boolean attemptTeleport(Player player, Location teleporterLoc, Waypoint existingWaypoint) {
+
+        WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
 
         // is there a waypoint matching this teleporter?
         if (existingWaypoint == null) {
@@ -47,19 +67,19 @@ public class TeleUtils {
         }
 
         // is the destination in our current world?
-        if (!existingWaypoint.loc.getWorld().equals(blockLocation.getWorld())) {
+        if (!existingWaypoint.loc.getWorld().equals(teleporterLoc.getWorld())) {
             player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
             return false;
         }
 
         // calculate teleport distance
-        double distance = existingWaypoint.loc.distance(blockLocation);
+        double distance = existingWaypoint.loc.distance(teleporterLoc);
 
         try {
 
-            int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - blockLocation.getBlockX());
-            int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - blockLocation.getBlockY());
-            int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - blockLocation.getBlockZ());
+            int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - teleporterLoc.getBlockX());
+            int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - teleporterLoc.getBlockY());
+            int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - teleporterLoc.getBlockZ());
             int numEntities = player.isInsideVehicle() ? 2 : 1;
 
             Calculable calc = new ExpressionBuilder(Config.costFormula)

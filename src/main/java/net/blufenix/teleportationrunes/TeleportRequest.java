@@ -5,7 +5,15 @@ import org.bukkit.entity.Player;
 
 public class TeleportRequest {
 
-    public TeleportRequest(Player p, Location loc) {
+    Player player;
+    Location destination;
+
+    public TeleportRequest(Player player, Location destination) {
+        this.player = player;
+        this.destination = destination.clone();
+    }
+
+    public void execute() {
 
     }
 

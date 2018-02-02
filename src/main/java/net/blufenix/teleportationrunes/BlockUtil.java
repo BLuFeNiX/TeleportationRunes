@@ -34,9 +34,54 @@ public class BlockUtil {
         return -1;
     }
 
+    public static int isTeleporter(Location loc) {
+        for (int rotation : new int[]{0,90,180,270}) {
+            if (isLocationAtVectorOfStructure(loc, Config.teleporterBlueprint.atRotation(rotation))) {
+                return rotation;
+            }
+        }
+
+        return -1;
+    }
+
+    public static int isWaypoint(Location loc) {
+        for (int rotation : new int[]{0,90,180,270}) {
+            if (isLocationAtVectorOfStructure(loc, Config.waypointBlueprint.atRotation(rotation))) {
+                return rotation;
+            }
+        }
+
+        return -1;
+    }
+
     // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block
     private static boolean isBlockAtVectorOfStructure(Block block, Blueprint.RotatedBlueprint blueprint) {
         Location loc = block.getLocation();
+        Blueprint.Block[][][] structure = blueprint.materialMatrix;
+        Vector vector = blueprint.clickableVector;
+
+        Location tempLoc = loc.clone().subtract(vector);
+
+        for (int i = 0; i < structure.length; i++) {
+            Blueprint.Block[][] layer = structure[i];
+            for (int j = 0; j < layer.length; j++) {
+                Blueprint.Block[] row = structure[i][j];
+                for (int k = 0; k < row.length; k++) {
+                    Material mat = row[k].getMaterial();
+                    if (mat != null && tempLoc.clone().add(j, -i, k).getBlock().getType() != mat) {
+                        if (DEBUG) TeleportationRunes.getInstance().getLogger().info("needed: " + mat
+                                + " but got: " + tempLoc.clone().add(j, -i, k).getBlock().getType().name());
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block
+    private static boolean isLocationAtVectorOfStructure(Location loc, Blueprint.RotatedBlueprint blueprint) {
         Blueprint.Block[][][] structure = blueprint.materialMatrix;
         Vector vector = blueprint.clickableVector;
 

@@ -1,4 +1,4 @@
 .idea
 target
 TeleportationRunes.iml
-src/main/resources/exp4j.jar
+classes/

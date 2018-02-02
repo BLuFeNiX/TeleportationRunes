@@ -18,6 +18,8 @@ public class Blueprint {
     private static final String SIGNATURE_BLOCK_3 = "SIGNATURE_BLOCK_3";
     private static final String SIGNATURE_BLOCK_4 = "SIGNATURE_BLOCK_4";
 
+    private static final String ANY_BLOCK = "ANY_BLOCK";
+
     private final RotatedBlueprint rotatedBlueprint_0;
     private final RotatedBlueprint rotatedBlueprint_90;
     private final RotatedBlueprint rotatedBlueprint_180;
@@ -33,6 +35,8 @@ public class Blueprint {
         Block[][][] materialMatrix_180 = rotateMatrixLeft(materialMatrix_90);
         Block[][][] materialMatrix_270 = rotateMatrixLeft(materialMatrix_180);
 
+//        Block[][][] symmetryMatrix = constructSymmetryMatrix(materialMatrix_0, materialMatrix_90, materialMatrix_180, materialMatrix_270);
+
         Vector[] signatureVectors_0 = findSignatureVectors(materialMatrix_0);
         Vector[] signatureVectors_90 = findSignatureVectors(materialMatrix_90);
         Vector[] signatureVectors_180 = findSignatureVectors(materialMatrix_180);
@@ -47,6 +51,27 @@ public class Blueprint {
         rotatedBlueprint_90 = new RotatedBlueprint(materialMatrix_90, clickableBlockVector_90, signatureVectors_90);
         rotatedBlueprint_180 = new RotatedBlueprint(materialMatrix_180, clickableBlockVector_180, signatureVectors_180);
         rotatedBlueprint_270 = new RotatedBlueprint(materialMatrix_270, clickableBlockVector_270, signatureVectors_270);
+    }
+
+    private static Block[][][] constructSymmetryMatrix(Block[][][]... matrices) {
+        Block[][][] symmetryMatrix = new Block[matrices[0].length][matrices[0][0].length][matrices[0][0][0].length];
+        for (int i = 0; i < matrices[0].length; i++) {
+            for (int j = 0; j < matrices[0][i].length; j++) {
+                for (int k = 0; k < matrices[0][i][j].length; k++) {
+                    Blueprint.Block bb = matrices[0][i][j][k];
+                    String materialName = bb.getMaterialName();
+                    boolean allMatch = true;
+                    for (int n=1; n < matrices.length; n++) {
+                        if (!materialName.equals(matrices[n][i][j][k].getMaterialName())) {
+                            allMatch = false;
+                            break;
+                        }
+                    }
+                    symmetryMatrix[i][j][k] = new Block(allMatch ? materialName : ANY_BLOCK);
+                }
+            }
+        }
+        return symmetryMatrix;
     }
 
     public RotatedBlueprint atRotation(int degrees) {
