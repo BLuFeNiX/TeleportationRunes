@@ -14,6 +14,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -50,11 +53,15 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
         Config.init(this);
     }
 
+
+    private BukkitTask task;
+    @Override
 	public void onEnable() {
 		if (Config.enabled) {
             waypointDB = new WaypointDB();
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
+            task = new TeleportCheckerTask().runTaskTimer(this, 0, 20);
 			this.getLogger().info(StringResources.LOADED);
 		}
 		else {
@@ -62,51 +69,55 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			this.getServer().getPluginManager().disablePlugin(this);
 		}
 	}
-	
+
+	@Override
 	public void onDisable() {
+        task.cancel();
         waypointDB.closeConnections();
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 
-	@EventHandler
-	public void onPlayerMove(final PlayerMoveEvent pme) {
-	    try {
-            final Player p = pme.getPlayer();
-            if (playersCurrentlyTeleporting.containsKey(p)) return;
-            final Location normalizedPlayerLoc = pme.getTo().getBlock().getLocation().add(Vectors.CENTER).clone();
-            Location potentialTeleporterLoc = normalizedPlayerLoc.clone().add(Vectors.DOWN);
-
-            playersCurrentlyTeleporting.put(p, potentialTeleporterLoc);
-
-            new TeleportTask(p, potentialTeleporterLoc).execute();
-        } catch (Throwable t) {
-	        getLogger().warning(t.getMessage());
-        }
-
-//		Block potentialTeleporterBlock = potentialTeleporterLoc.getBlock();
-//		final int rotation;
-//		if ((rotation = BlockUtil.isTeleporter(potentialTeleporterBlock)) >= 0) {
-//			playersCurrentlyTeleporting.put(p, potentialTeleporterLoc);
-//			final World w = p.getWorld();
-//			new BukkitRunnable() {
-//				int countdown = 20;
+//	private void addRecipes() {
+//        ItemStack wand = new ItemStack(Material.REDSTONE_TORCH_ON, 1);
+//        ItemMeta meta = wand.getItemMeta();
+//        meta.setDisplayName("Magic Wand");
+//        meta.setLore(Arrays.asList("A message is here, but is it the one you need?"));
+//        wand.setItemMeta(meta);
 //
-//				@Override
-//				public void run() {
-//					if (countdown > 0) {
-//						w.spawnParticle(Particle.PORTAL, origLoc.clone().add(Vectors.UP).add(Vectors.UP).add(0, (Math.random() * 2) - 1, 0), (int) (Math.random() * 1000), null);
-//						p.sendMessage("Teleporting in " + countdown + "... "/*+particle.name()*/);
-//						countdown--;
-//					} else {
-//						TeleUtils.attemptTeleport(p, loc, rotation);
-//						playersCurrentlyTeleporting.remove(p);
-//						this.cancel();
-//					}
-//				}
-//			}.runTaskTimer(TeleportationRunes.getInstance(), 0, 5);
-//		}
+//        ShapedRecipe wandRecipe = new ShapedRecipe(new NamespacedKey(this, "wand"), wand);
+//
+//        wandRecipe.shape("*","l","l");
+//
+//        wandRecipe.setIngredient('*', Material.REDSTONE);
+//        wandRecipe.setIngredient('l', Material.STICK);
+//
+//        getServer().addRecipe(wandRecipe);
+//    }
 
-	}
+	static class TeleportCheckerTask extends BukkitRunnable {
+
+        @Override
+        public void run() {
+            Collection<? extends Player> players = TeleportationRunes.getInstance().getServer().getOnlinePlayers();
+            for (Player p: players) {
+                try {
+                    if (playersCurrentlyTeleporting.containsKey(p)) continue;
+                    Location normalizedPlayerLoc = p.getLocation().clone();
+                    normalizedPlayerLoc.setX(normalizedPlayerLoc.getBlockX());
+                    normalizedPlayerLoc.setY(normalizedPlayerLoc.getBlockY());
+                    normalizedPlayerLoc.setZ(normalizedPlayerLoc.getBlockZ());
+                    normalizedPlayerLoc.add(Vectors.CENTER);
+                    Location potentialTeleporterLoc = normalizedPlayerLoc.clone().add(Vectors.DOWN);
+
+                    playersCurrentlyTeleporting.put(p, potentialTeleporterLoc);
+
+                    new TeleportTask(p, potentialTeleporterLoc).execute();
+                } catch (Throwable t) {
+                    TeleportationRunes.getInstance().getLogger().warning("Whoops! -- "+t.getMessage());
+                }
+            }
+        }
+    }
 
 	static class TeleportTask extends BukkitRunnable {
 
@@ -160,7 +171,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 						particleEffectLoc.clone().add(0, Math.random()*2, 0), /* location of particles */
 						(int) (Math.random() * 1000), /* number of particles */
 						null);
-				player.sendMessage("Teleporting in " + ((COUNTDOWN_TICKS-elapsedTicks)/20) + "...");
+				if (elapsedTicks % 20 == 0) player.sendMessage("Teleporting in " + ((COUNTDOWN_TICKS-elapsedTicks)/20) + "...");
 			} else {
 				TeleUtils.attemptTeleport(player, teleporterLoc, waypoint);
 				onSuccessOrFail();
