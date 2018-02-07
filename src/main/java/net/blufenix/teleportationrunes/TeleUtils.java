@@ -5,8 +5,13 @@ import de.congrace.exp4j.ExpressionBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
+
+import java.util.ArrayList;
 
 /**
  * Created by blufenix on 8/5/15.
@@ -47,7 +52,7 @@ public class TeleUtils {
 
         // make sure the waypoint hasn't been destroyed
         int waypointRotation;
-        if ( (waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) < 0) {
+        if ((waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) < 0) {
             player.sendMessage(StringResources.WAYPOINT_DAMAGED);
             waypointDB.removeWaypoint(existingWaypoint);
             return false;
@@ -109,34 +114,50 @@ public class TeleUtils {
                 adjustedLoc.setDirection(playerLoc.getDirection());
                 player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
 
+                // check if the player has any leashed animals to teleport as well
+                ArrayList<LivingEntity> leashedEntities = new ArrayList<>();
+                for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
+                    if (entity instanceof LivingEntity) {
+                        LivingEntity le = (LivingEntity) entity;
+                        if (le.isLeashed() && le.getLeashHolder() == player) {
+                            leashedEntities.add(le);
+                        }
+                    }
+                }
+
                 if (player.isInsideVehicle()) {
                     Vehicle vehicle = (Vehicle) player.getVehicle();
                     vehicle.eject();
                     vehicle.teleport(adjustedLoc);
                     player.teleport(adjustedLoc);
                     vehicle.setPassenger(player);
-                }
-                else {
+                } else {
                     player.teleport(adjustedLoc);
+                }
+
+                // port them leashed animals as well if there are any
+                for (LivingEntity le : leashedEntities) {
+                    le.teleport(adjustedLoc);
+                    le.setLeashHolder(player);
+                    player.spawnParticle(Particle.HEART, adjustedLoc, 1);
                 }
 
                 player.getWorld().strikeLightningEffect(adjustedLoc);
 
-                TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
-                player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
-                player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
+                TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc + " to " + adjustedLoc);
+                player.sendMessage(ChatColor.GREEN + "Teleportation successful!");
+                player.sendMessage(ChatColor.GREEN + "You traveled " + ((int) distance) + " blocks at the cost of " + fee + " experience points.");
                 return true;
-            }
-            else {
-                player.sendMessage(ChatColor.RED+"You do not have enough experience to use this teleporter.");
-                player.sendMessage(ChatColor.RED+"Your Exp: "+currentExp);
-                player.sendMessage(ChatColor.RED+"Exp needed: "+fee);
-                player.sendMessage(ChatColor.RED+"Distance: "+((int)distance)+" blocks");
+            } else {
+                player.sendMessage(ChatColor.RED + "You do not have enough experience to use this teleporter.");
+                player.sendMessage(ChatColor.RED + "Your Exp: " + currentExp);
+                player.sendMessage(ChatColor.RED + "Exp needed: " + fee);
+                player.sendMessage(ChatColor.RED + "Distance: " + ((int) distance) + " blocks");
                 return false;
             }
 
         } catch (Exception e) {
-            player.sendMessage(ChatColor.RED+"TeleportationRunes cost formula is invalid. Please inform your server administrator.");
+            player.sendMessage(ChatColor.RED + "TeleportationRunes cost formula is invalid. Please inform your server administrator.");
             return false;
         }
     }
