@@ -222,14 +222,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
             event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
-
-		// don't do anything if the player placed a block
-	    if (event.isBlockInHand()) {
-			if (DEBUG) this.getLogger().info("player placed a block; returning.");
-            long time2 = System.nanoTime();
-            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
-			return;
-		}
 	    
 	    Player player = event.getPlayer();
 	    
@@ -240,10 +232,15 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		int rotation;
 	    if ( (rotation = BlockUtil.isTeleporter(blockClicked)) >= 0) {
 			if (DEBUG) this.getLogger().info("teleporter clicked!");
+			// cancel block or sign place on teleporter
+			event.setCancelled(event.isBlockInHand() || event.getMaterial() == Material.SIGN);
+			// attempt teleport
             TeleUtils.attemptTeleport(player, blockLocation, rotation);
 	    }
 	    else if ( (rotation = BlockUtil.isWaypoint(blockClicked)) >= 0) {
 			if (DEBUG) this.getLogger().info("waypoint clicked!");
+			// cancel block or sign place on waypoint
+			event.setCancelled(event.isBlockInHand() || event.getMaterial() == Material.SIGN);
 			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
 	    	// register waypoint
 			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
