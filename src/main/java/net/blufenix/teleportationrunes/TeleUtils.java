@@ -108,7 +108,6 @@ public class TeleUtils {
                 Location playerLoc = player.getLocation();
                 Location adjustedLoc = existingWaypoint.loc.clone().add(Vectors.UP).add(Vectors.CENTER); // teleport to the middle of the block, and one block up
                 adjustedLoc.setDirection(playerLoc.getDirection());
-                player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
 
                 if (player.isInsideVehicle()) {
                     Vehicle vehicle = (Vehicle) player.getVehicle();
