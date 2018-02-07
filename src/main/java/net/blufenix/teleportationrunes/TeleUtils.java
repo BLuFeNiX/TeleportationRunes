@@ -5,6 +5,7 @@ import de.congrace.exp4j.ExpressionBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 
@@ -120,7 +121,7 @@ public class TeleUtils {
                     player.teleport(adjustedLoc);
                 }
 
-                player.getWorld().strikeLightningEffect(adjustedLoc);
+                player.spawnParticle(Particle.SPELL_MOB, playerLoc, 50);
 
                 TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
                 player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
