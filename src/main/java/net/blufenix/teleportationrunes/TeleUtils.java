@@ -123,8 +123,9 @@ public class TeleUtils {
                 player.getWorld().strikeLightningEffect(adjustedLoc);
 
                 TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc +" to " + adjustedLoc);
-                player.sendMessage(ChatColor.GREEN+"Teleportation successful!");
-                player.sendMessage(ChatColor.GREEN+"You traveled "+((int)distance)+" blocks at the cost of "+fee+" experience points.");
+                String text = "You traveled "+((int)distance)+" blocks";
+                text += (fee == 0) ? "." : " at the cost of " + fee + " experience points.";
+                player.sendMessage(ChatColor.GREEN+text);
                 return true;
             }
             else {
