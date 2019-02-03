@@ -61,7 +61,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
             waypointDB = new WaypointDB();
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
-            task = new TeleportCheckerTask().runTaskTimer(this, 0, 20);
+			// uncomment to auto-teleport
+//            task = new TeleportCheckerTask().runTaskTimer(this, 0, 20);
 			this.getLogger().info(StringResources.LOADED);
 		}
 		else {
@@ -211,15 +212,21 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
 			if (DEBUG) this.getLogger().info("player did not right click; returning.");
             long time2 = System.nanoTime();
-            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
+//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
+
+		Block blockClicked = event.getClickedBlock();
 
 		// ignore off-hand click (two events per click now :P)
 		if (event.getHand() == EquipmentSlot.OFF_HAND) {
 			if (DEBUG) this.getLogger().info("ignoring off-hand click");
-            long time2 = System.nanoTime();
-            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
+			// don't place off-hand blocks on structures
+			if (BlockUtil.isWaypoint(blockClicked) >= 0 || BlockUtil.isTeleporter(blockClicked) >= 0) {
+				event.setCancelled(true);
+			}
+//            long time2 = System.nanoTime();
+//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
 
@@ -227,13 +234,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	    if (event.isBlockInHand()) {
 			if (DEBUG) this.getLogger().info("player placed a block; returning.");
             long time2 = System.nanoTime();
-            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
+//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
 	    
 	    Player player = event.getPlayer();
-	    
-	    Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
         // TODO cancel event if teleporter/waypoint was clicked? (as in, cancel other plugins' events?)
@@ -279,8 +284,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			}
 		}
 
-		long time2 = System.nanoTime();
-	    player.sendMessage("time: "+((time2-time)/1000000f)+" ms");
+//		long time2 = System.nanoTime();
+//	    player.sendMessage("time: "+((time2-time)/1000000f)+" ms");
 
 	}
 
