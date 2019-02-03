@@ -21,7 +21,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.12.2-R0.1-SNAPSHOT</version>
+            <version>1.13.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!--Bukkit API-->
@@ -51,7 +51,7 @@
                     <include>config.yml</include>
                     <include>LICENSE.txt</include>
                     <include>plugin.yml</include>
-                    <include>exp4j.jar</include>
+                    <include>libs/</include>
                 </includes>
             </resource>
         </resources>
@@ -75,7 +75,7 @@
                                     <version>0.3.11</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${basedir}/src/main/resources</outputDirectory>
+                                    <outputDirectory>${basedir}/src/main/resources/libs</outputDirectory>
                                     <destFileName>exp4j.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
