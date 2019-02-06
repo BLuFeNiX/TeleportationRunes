@@ -6,23 +6,21 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
@@ -36,6 +34,8 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	private static Set<Player> playersPendingWaypointMirage = new HashSet<>();
 	private static Set<Player> playersPendingTeleporterMirage = new HashSet<>();
 	private static Map<Player, Location> playersCurrentlyTeleporting = new HashMap<>(); // location is teleporter location
+
+    ItemMeta BOE_META;
 
 	public static TeleportationRunes getInstance() {
 		return _instance;
@@ -58,11 +58,12 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     @Override
 	public void onEnable() {
 		if (Config.enabled) {
+            addRecipes();
             waypointDB = new WaypointDB();
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
 			// uncomment to auto-teleport
-//            task = new TeleportCheckerTask().runTaskTimer(this, 0, 20);
+            task = new TeleportCheckerTask().runTaskTimer(this, 0, 20);
 			this.getLogger().info(StringResources.LOADED);
 		}
 		else {
@@ -78,22 +79,21 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 
-//	private void addRecipes() {
-//        ItemStack wand = new ItemStack(Material.REDSTONE_TORCH_ON, 1);
-//        ItemMeta meta = wand.getItemMeta();
-//        meta.setDisplayName("Magic Wand");
-//        meta.setLore(Arrays.asList("A message is here, but is it the one you need?"));
-//        wand.setItemMeta(meta);
-//
-//        ShapedRecipe wandRecipe = new ShapedRecipe(new NamespacedKey(this, "wand"), wand);
-//
-//        wandRecipe.shape("*","l","l");
-//
-//        wandRecipe.setIngredient('*', Material.REDSTONE);
-//        wandRecipe.setIngredient('l', Material.STICK);
-//
-//        getServer().addRecipe(wandRecipe);
-//    }
+
+	private void addRecipes() {
+        ItemStack bookOfEnder = new ItemStack(Material.ENCHANTED_BOOK, 1);
+        BOE_META = bookOfEnder.getItemMeta();
+        BOE_META.setDisplayName("Book of Ender");
+        BOE_META.setLore(Arrays.asList("Bending spacetime has never been easier!"));
+        bookOfEnder.setItemMeta(BOE_META);
+
+        ShapelessRecipe boeRecipe = new ShapelessRecipe(new NamespacedKey(this, "book_of_ender"), bookOfEnder);
+
+        boeRecipe.addIngredient(Material.BOOK);
+        boeRecipe.addIngredient(Material.ENDER_PEARL);
+
+        getServer().addRecipe(boeRecipe);
+    }
 
 	static class TeleportCheckerTask extends BukkitRunnable {
 
@@ -114,105 +114,246 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
                     new TeleportTask(p, potentialTeleporterLoc).execute();
                 } catch (Throwable t) {
-                    TeleportationRunes.getInstance().getLogger().warning("Whoops! -- "+t.getMessage());
+                    TeleportationRunes.getInstance().getLogger().warning("whoops! "+t.getMessage());
+					t.printStackTrace();
                 }
             }
         }
     }
 
+    private static class SwirlAnimation {
+
+    	private int duration = 20; // ticks
+    	private int segments;
+    	private double radius;
+    	private boolean useFakeTicks;
+    	private Location location;
+    	private World world;
+    	private Particle[] particles;
+    	private int numParticles;
+		private boolean repeat;
+
+		private double degreesPerTick;
+		private int lastElapsedTicks = -1;
+
+		private int totalRotationsDegrees = 360;
+
+		private Vector[][] compiledVectors;
+
+		private static Vector[][] defaultCompiledVectors;
+
+		public static SwirlAnimation getDefault() {
+
+			SwirlAnimation anim = new SwirlAnimation()
+					.setDuration(20*3)
+					.setParticle(Particle.SPELL_WITCH)
+					.setRadius(5)
+					.setSegments(3)
+					.setNumParticles(10)
+					.enableFakeTicks(true)
+					.enableRepeat(true)
+					.setRotations(2);
+
+			if (defaultCompiledVectors != null) {
+				anim.setCompiledVectors(defaultCompiledVectors);
+			} else {
+				defaultCompiledVectors = SwirlAnimation.compile(anim);
+			}
+
+			return anim;
+		}
+
+		public SwirlAnimation setDuration(int duration) {
+			this.duration = duration;
+			this.degreesPerTick = (double) totalRotationsDegrees/duration;
+			return this;
+		}
+
+		public SwirlAnimation setSegments(int segments) {
+			this.segments = segments;
+			return this;
+		}
+
+		public SwirlAnimation setRadius(double radius) {
+			this.radius = radius;
+			return this;
+		}
+
+		public SwirlAnimation enableFakeTicks(boolean useFakeTicks) {
+			this.useFakeTicks = useFakeTicks;
+			return this;
+		}
+
+		public SwirlAnimation setLocation(Location location) {
+			this.location = location;
+			this.world  = location.getWorld();
+			return this;
+		}
+
+		public SwirlAnimation setParticle(Particle... particles) {
+			this.particles = particles;
+			return this;
+		}
+
+		public SwirlAnimation setNumParticles(int numParticles) {
+			this.numParticles = numParticles;
+			return this;
+		}
+
+		public SwirlAnimation setRotations(double rotations) {
+			this.totalRotationsDegrees = (int) (360 * rotations);
+			this.degreesPerTick = (double) totalRotationsDegrees/duration;
+			return this;
+		}
+
+		public SwirlAnimation enableRepeat(boolean repeat) {
+			this.repeat = repeat;
+			return this;
+		}
+
+		public void update(int elapsedTicks) {
+			if (repeat && elapsedTicks > duration) {
+				elapsedTicks %= duration;
+				lastElapsedTicks = -1;
+			} else if (elapsedTicks > duration) {
+				TeleportationRunes.getInstance().getLogger().warning("animation finished. not ticking!");
+				return;
+			}
+
+			if (useFakeTicks) {
+				for (int fakeTicks = lastElapsedTicks + 1; fakeTicks <= elapsedTicks; fakeTicks++) {
+					onTick(fakeTicks);
+				}
+			} else {
+				onTick(elapsedTicks);
+			}
+
+			lastElapsedTicks = elapsedTicks;
+		}
+
+		private void onTick(int tick) {
+			for (int segment = 0; segment < compiledVectors[tick].length; segment++) {
+				for (Particle p : particles) {
+					world.spawnParticle(p, location.clone().add(compiledVectors[tick][segment]), numParticles, null);
+				}
+			}
+		}
+
+		public static Vector[][] compile(SwirlAnimation anim) {
+			Vector[][] compiledVectors = new Vector[anim.duration][];
+			for (int tick = 0; tick < anim.duration; tick++) {
+				compiledVectors[tick] = compileTick(anim, tick);
+			}
+			anim.compiledVectors = compiledVectors;
+			return compiledVectors;
+		}
+
+		private static Vector[] compileTick(SwirlAnimation anim, int tick) {
+			Vector[] vectors = new Vector[anim.segments];
+			for (int segment = 0; segment < anim.segments; segment++) {
+				double segmentOffset = ((double)360/anim.segments) * segment;
+				double radians = Math.toRadians(((double) tick * anim.degreesPerTick) + segmentOffset);
+				double r = anim.radius * (1 - ((double) tick / anim.duration));
+				double xPos = r * Math.cos(radians);
+				double zPos = r * Math.sin(radians);
+				vectors[segment] = new Vector(xPos, 0, zPos);
+			}
+			return vectors;
+		}
+
+		public void setCompiledVectors(Vector[][] compiledVectors) {
+			this.compiledVectors = compiledVectors;
+		}
+	}
+
 	static class TeleportTask extends BukkitRunnable {
 
-		private static final int COUNTDOWN_SECONDS = 5;
-		private static final int COUNTDOWN_TICKS = COUNTDOWN_SECONDS * 20; // assumes 20 ticks per second standard server
-		private static final int UPDATE_INTERVAL_TICKS = 5;
+    	static {
 
-		// start with negative ticks, so we can update the ticks at the start of every run
-		// will be 0 on first run
-		private int elapsedTicks = -UPDATE_INTERVAL_TICKS;
+		}
+
+		// modify these
+		private static final int COUNTDOWN_SECONDS = 3;
+		private static final int UPDATE_INTERVAL_TICKS = 2;
+
+		// auto-calculated
+		// todo de-dupe this calc
+		private static final int COUNTDOWN_TICKS = COUNTDOWN_SECONDS * 20; // assumes 20 ticks per second standard server
+
+		private int elapsedTicks = 0;
 
 		private final Player player;
-		private final Location teleporterLoc;
-		private final World departingWorld;
+		private final Location potentialTeleporterLoc;
 
 		private Teleporter teleporter;
 		private Waypoint waypoint;
 
-		private Location particleEffectLoc;
 
-		TeleportTask(Player player, Location teleporterLoc) {
+		private SwirlAnimation animation;
+
+		TeleportTask(Player player, Location potentialTeleporterLoc) {
 			this.player = player;
-			this.teleporterLoc = teleporterLoc;
-			this.departingWorld = teleporterLoc.getWorld();
-			this.particleEffectLoc = teleporterLoc.clone().add(Vectors.UP); // one block above teleporter
+			this.potentialTeleporterLoc = potentialTeleporterLoc;
 		}
 
 		public void execute() {
-            this.teleporter = TeleUtils.getTeleporterFromLocation(teleporterLoc);
-            if (teleporter != null) {
-                this.waypoint = TeleUtils.getWaypointForTeleporter(teleporter);
-                this.runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
-            } else {
-                // player not standing on a teleporter
-                playersCurrentlyTeleporting.remove(player);
-            }
+			this.teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
+			if (teleporter != null) {
+				this.waypoint = TeleUtils.getWaypointForTeleporter(teleporter);
+				if (waypoint != null) {
+                    this.animation = SwirlAnimation.getDefault();
+                    animation.setLocation(teleporter.loc.clone().add(Vectors.UP));
+                    this.runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
+                    return; // success
+                }
+			}
+
+			// if we made it here, the it wasn't a teleporter, or it had no waypoint
+			playersCurrentlyTeleporting.remove(player);
 		}
 
 		@Override
 		public void run() {
+
+			// we haven't actually ticked yet, but if we pass 0 into our animation ticks
+			// it will animate a single frame regardless of the interval or fake tick settings
+			// TODO is there a cleaner way to fix this and remove the time shift?
 			elapsedTicks += UPDATE_INTERVAL_TICKS;
 
 			if (!playerStillAtTeleporter()) {
-                player.sendMessage("You left the teleporter area. Cancelling...");
-                onSuccessOrFail();
-                return;
-            }
+				player.sendMessage("You left the teleporter area. Cancelling...");
+				onSuccessOrFail();
+				return;
+			}
 
 			if (elapsedTicks < COUNTDOWN_TICKS) {
-				departingWorld.spawnParticle(Particle.PORTAL,
-						particleEffectLoc.clone().add(0, Math.random()*2, 0), /* location of particles */
-						(int) (Math.random() * 1000), /* number of particles */
-						null);
-				if (elapsedTicks % 20 == 0) player.sendMessage("Teleporting in " + ((COUNTDOWN_TICKS-elapsedTicks)/20) + "...");
+				animation.update(elapsedTicks);
+				//if (elapsedTicks % 20 == 0) player.sendMessage("Teleporting in " + ((COUNTDOWN_TICKS-elapsedTicks)/20) + "...");
 			} else {
-				TeleUtils.attemptTeleport(player, teleporterLoc, waypoint);
+				TeleUtils.attemptTeleport(player, teleporter.loc, waypoint);
 				onSuccessOrFail();
 			}
+
 		}
 
 		private void onSuccessOrFail() {
-            playersCurrentlyTeleporting.remove(player);
-            this.cancel();
-        }
+			playersCurrentlyTeleporting.remove(player);
+			this.cancel();
+		}
 
-        private boolean playerStillAtTeleporter() {
-            return player.getLocation().distance(teleporterLoc) < 2;
-        }
+		private boolean playerStillAtTeleporter() {
+			return player.getLocation().distance(potentialTeleporterLoc) < 2;
+		}
 	}
-
-	/*
-
-	TODO
-	* player must have spell book in off-hand and light fire on block to activate?
-	* attempt teleport when movement onto correct area detected? (radius size?)
-	* notify player via message? animation/effect? how long should it take?
-	* must have iron, gold, diamond, emerald, something from nether, or bedrock as CORE?
-	*
-	*
-
-	 */
 
 	@EventHandler
 	public void onPlayerInteractBlock(PlayerInteractEvent event) {
-
-		long time = System.nanoTime();
 
 		if (DEBUG) this.getLogger().info("in onPlayerInteractBlock()");
 
 		// only activate on right-click
 	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
 			if (DEBUG) this.getLogger().info("player did not right click; returning.");
-            long time2 = System.nanoTime();
-//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
 
@@ -221,20 +362,12 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		// ignore off-hand click (two events per click now :P)
 		if (event.getHand() == EquipmentSlot.OFF_HAND) {
 			if (DEBUG) this.getLogger().info("ignoring off-hand click");
-			// don't place off-hand blocks on structures
-			if (BlockUtil.isWaypoint(blockClicked) >= 0 || BlockUtil.isTeleporter(blockClicked) >= 0) {
-				event.setCancelled(true);
-			}
-//            long time2 = System.nanoTime();
-//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
 			return;
 		}
 
-		// don't do anything if the player placed a block
-	    if (event.isBlockInHand()) {
-			if (DEBUG) this.getLogger().info("player placed a block; returning.");
-            long time2 = System.nanoTime();
-//            event.getPlayer().sendMessage("time: "+((time2-time)/1000000f)+" ms");
+		// don't do anything unless the player is holding a book
+	    if (!event.getPlayer().getInventory().getItemInMainHand().getItemMeta().equals(BOE_META)) {
+			if (DEBUG) this.getLogger().info("player not holding book; returning.");
 			return;
 		}
 	    
@@ -283,10 +416,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				BlockUtil.showMirage(player, blockClicked, Config.teleporterBlueprint.atRotation(0));
 			}
 		}
-
-//		long time2 = System.nanoTime();
-//	    player.sendMessage("time: "+((time2-time)/1000000f)+" ms");
-
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -297,28 +426,25 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
                 }
                 else if (!sender.isOp()) {
                     sender.sendMessage(ChatColor.GOLD+"You are not an OP!");
-                    return true;
 				} else if ("reload".startsWith(args[0])) {
                     Config.reload();
 					sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
-					return true;
 				} else if (DEBUG) {
 				    if ("mirage".startsWith(args[0])) {
                         if (!(sender instanceof Player)) {
                             sender.sendMessage(ChatColor.RED + "Must be a player to show mirage!");
-                            return true;
                         }
                         if ("teleporter".startsWith(args[1])) {
                             playersPendingTeleporterMirage.add((Player) sender);
                             sender.sendMessage(ChatColor.GOLD + "Ready to show teleporter!");
-                            return true;
                         } else if ("waypoint".startsWith(args[1])) {
                             playersPendingWaypointMirage.add((Player) sender);
                             sender.sendMessage(ChatColor.GOLD + "Ready to show waypoint!");
-                            return true;
                         }
                     }
 				}
+
+				return true;
 		}
 
 		return false;

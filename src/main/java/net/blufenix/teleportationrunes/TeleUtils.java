@@ -10,8 +10,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+
+import static net.blufenix.teleportationrunes.Vectors.*;
 
 /**
  * Created by blufenix on 8/5/15.
@@ -22,6 +25,18 @@ public class TeleUtils {
         int rotation;
         if ((rotation = BlockUtil.isTeleporter(loc.getBlock())) >= 0) {
             return new Teleporter(loc, rotation);
+        }
+        return null;
+    }
+
+    private static Vector[] nearbyVectors = {NONE, NORTH, EAST, SOUTH, SOUTH, WEST, WEST, NORTH, NORTH};
+
+    public static Teleporter getTeleporterNearLocation(Location loc) {
+        Teleporter teleporter;
+        Location tmpLoc = loc.clone();
+        for (int i = 0; i < nearbyVectors.length; i++) {
+            teleporter = getTeleporterFromLocation(tmpLoc.add(nearbyVectors[i]));
+            if (teleporter != null) return teleporter;
         }
         return null;
     }

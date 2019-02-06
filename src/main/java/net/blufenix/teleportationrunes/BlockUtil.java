@@ -157,8 +157,8 @@ public class BlockUtil {
         Material mat1 = loc.clone().add(Vectors.UP).getBlock().getType();
         Material mat2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
-        return (mat1 == Material.AIR || mat1 == Material.WATER)
-                && (mat2 == Material.AIR || mat2 == Material.WATER);
+        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent())
+                && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent());
     }
 
     private static abstract class BlockInteractor {

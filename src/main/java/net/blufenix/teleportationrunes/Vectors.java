@@ -16,5 +16,6 @@ public class Vectors {
     public static final Vector EAST = new Vector(1, 0, 0);
     public static final Vector WEST = new Vector(-1, 0, 0);
     public static final Vector CENTER = new Vector(0.5, 0, 0.5);
+    public static final Vector NONE = new Vector(0, 0, 0);
 
 }
