@@ -27,13 +27,17 @@ public class DebugMirage {
         }
     }
 
-    public static void handleMirage(Player player, Block blockClicked) {
+    public static boolean handleMirage(Player player, Block blockClicked) {
         if (playersPendingWaypointMirage.remove(player)) {
             TeleportationRunes.getInstance().getLogger().info("showing waypoint mirage!");
             BlockUtil.showMirage(player, blockClicked, Config.waypointBlueprint.atRotation(0));
+            return true;
         } else if (playersPendingTeleporterMirage.remove(player)) {
             TeleportationRunes.getInstance().getLogger().info("showing teleporter mirage!");
             BlockUtil.showMirage(player, blockClicked, Config.teleporterBlueprint.atRotation(0));
+            return true;
         }
+
+        return false;
     }
 }

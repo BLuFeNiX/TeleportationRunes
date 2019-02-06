@@ -12,6 +12,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -65,6 +67,20 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 
+	private static EquipmentSlot getBOEHand(Player player) {
+		PlayerInventory inv = player.getInventory();
+		ItemStack mainItem = inv.getItemInMainHand();
+		ItemStack offItem = inv.getItemInOffHand();
+
+		if (mainItem != null && BookOfEnder.getMeta().equals(mainItem.getItemMeta())) {
+			return EquipmentSlot.HAND;
+		} else if (offItem != null && BookOfEnder.getMeta().equals(offItem.getItemMeta())) {
+			return EquipmentSlot.OFF_HAND;
+		} else {
+			return null;
+		}
+	}
+
 	@EventHandler
 	public void onPlayerInteractBlock(PlayerInteractEvent event) {
 
@@ -76,24 +92,25 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			return;
 		}
 
-		Block blockClicked = event.getClickedBlock();
+		Player player = event.getPlayer();
+		EquipmentSlot boeHand = getBOEHand(player);
 
-		// ignore off-hand click (two events per click now :P)
+		if (boeHand != EquipmentSlot.HAND) {
+			if (DEBUG) this.getLogger().info("player not holding book of ender (in correct hand); returning.");
+			return;
+		}
+
+		// we are handling the event, so don't allow block placement (with either hand)
+		event.setCancelled(true);
+
 		if (event.getHand() == EquipmentSlot.OFF_HAND) {
-			if (DEBUG) this.getLogger().info("ignoring off-hand click");
+			if (DEBUG) this.getLogger().info("ignoring off-hand");
 			return;
 		}
 
-		// don't do anything unless the player is holding a book
-	    if (!event.getPlayer().getInventory().getItemInMainHand().getItemMeta().equals(BookOfEnder.getMeta())) {
-			if (DEBUG) this.getLogger().info("player not holding book; returning.");
-			return;
-		}
-	    
-	    Player player = event.getPlayer();
+		Block blockClicked = event.getClickedBlock();
 	    Location blockLocation = blockClicked.getLocation();
 
-        // TODO cancel event if teleporter/waypoint was clicked? (as in, cancel other plugins' events?)
 		int rotation;
 	    if ( (rotation = BlockUtil.isTeleporter(blockClicked)) >= 0) {
 			if (DEBUG) this.getLogger().info("teleporter clicked!");
@@ -125,9 +142,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
                 player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
             }
 	    }
-		else if (DEBUG) {
-	        this.getLogger().info("neither teleporter nor waypoint clicked");
-            DebugMirage.handleMirage(player, blockClicked);
+		else {
+			if (!DebugMirage.handleMirage(player, blockClicked)) {
+				this.getLogger().info("neither teleporter nor waypoint clicked");
+				player.sendTitle("", "You must click the center of a waypoint...");
+			}
 		}
 	}
 

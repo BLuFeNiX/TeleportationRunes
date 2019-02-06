@@ -130,6 +130,7 @@ public class TeleUtils {
                 player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
 
                 // check if the player has any leashed animals to teleport as well
+                // TODO add to numEntities (can player be riding and leash the same/different entity?)
                 ArrayList<LivingEntity> leashedEntities = new ArrayList<>();
                 for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
                     if (entity instanceof LivingEntity) {
