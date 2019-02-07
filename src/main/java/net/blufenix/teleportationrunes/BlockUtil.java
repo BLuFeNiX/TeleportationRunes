@@ -14,8 +14,12 @@ public class BlockUtil {
 
     private static final boolean DEBUG = false;
 
+    private static class LazyHolder {
+        public static final int[] ROTATIONS = Config.enableRotation ? new int[]{0,90,180,270} : new int[]{0};
+    }
+
     public static int isTeleporter(Block block) {
-        for (int rotation : new int[]{0,90,180,270}) {
+        for (int rotation : LazyHolder.ROTATIONS) {
             if (isBlockAtVectorOfStructure(block, Config.teleporterBlueprint.atRotation(rotation))) {
                 return rotation;
             }
@@ -25,7 +29,7 @@ public class BlockUtil {
     }
 
     public static int isWaypoint(Block block) {
-        for (int rotation : new int[]{0,90,180,270}) {
+        for (int rotation : LazyHolder.ROTATIONS) {
             if (isBlockAtVectorOfStructure(block, Config.waypointBlueprint.atRotation(rotation))) {
                 return rotation;
             }
@@ -35,7 +39,7 @@ public class BlockUtil {
     }
 
     public static int isTeleporter(Location loc) {
-        for (int rotation : new int[]{0,90,180,270}) {
+        for (int rotation : LazyHolder.ROTATIONS) {
             if (isLocationAtVectorOfStructure(loc, Config.teleporterBlueprint.atRotation(rotation))) {
                 return rotation;
             }
@@ -45,7 +49,7 @@ public class BlockUtil {
     }
 
     public static int isWaypoint(Location loc) {
-        for (int rotation : new int[]{0,90,180,270}) {
+        for (int rotation : LazyHolder.ROTATIONS) {
             if (isLocationAtVectorOfStructure(loc, Config.waypointBlueprint.atRotation(rotation))) {
                 return rotation;
             }
@@ -157,7 +161,9 @@ public class BlockUtil {
         Material mat1 = loc.clone().add(Vectors.UP).getBlock().getType();
         Material mat2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
-        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent())
+        TeleportationRunes.getInstance().getLogger().info(mat1.name());
+
+        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent() || mat1.name().contains("STEP"))
                 && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent());
     }
 

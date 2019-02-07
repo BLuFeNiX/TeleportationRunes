@@ -12,6 +12,7 @@ public class Config {
 
     public static boolean enabled;
     public static String costFormula;
+    public static boolean enableRotation;
 
     public static Blueprint teleporterBlueprint;
     public static Blueprint waypointBlueprint;
@@ -28,6 +29,7 @@ public class Config {
         FileConfiguration config = plugin.getConfig();
         enabled = config.getBoolean("TeleportationRunes.enabled");
         costFormula = config.getString("TeleportationRunes.costFormula");
+        enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");

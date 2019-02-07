@@ -24,12 +24,7 @@ public class TeleportChecker extends BukkitRunnable {
         for (final Player p: players) {
             try {
                 if (playersCurrentlyTeleporting.containsKey(p)) continue;
-                Location normalizedPlayerLoc = p.getLocation().clone();
-                normalizedPlayerLoc.setX(normalizedPlayerLoc.getBlockX());
-                normalizedPlayerLoc.setY(normalizedPlayerLoc.getBlockY());
-                normalizedPlayerLoc.setZ(normalizedPlayerLoc.getBlockZ());
-                normalizedPlayerLoc.add(Vectors.CENTER);
-                final Location potentialTeleporterLoc = normalizedPlayerLoc.clone().add(Vectors.DOWN);
+                final Location potentialTeleporterLoc = p.getLocation().add(Vectors.DOWN);
 
                 playersCurrentlyTeleporting.put(p, potentialTeleporterLoc);
 

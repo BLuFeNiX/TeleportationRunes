@@ -84,11 +84,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onPlayerInteractBlock(PlayerInteractEvent event) {
 
-		if (DEBUG) this.getLogger().info("in onPlayerInteractBlock()");
+//		if (DEBUG) this.getLogger().info("in onPlayerInteractBlock()");
 
 		// only activate on right-click
 	    if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-			if (DEBUG) this.getLogger().info("player did not right click; returning.");
+//			if (DEBUG) this.getLogger().info("player did not right click; returning.");
 			return;
 		}
 
@@ -96,9 +96,11 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		EquipmentSlot boeHand = getBOEHand(player);
 
 		if (boeHand != EquipmentSlot.HAND) {
-			if (DEBUG) this.getLogger().info("player not holding book of ender (in correct hand); returning.");
+//			if (DEBUG) this.getLogger().info("player not holding book of ender (in correct hand); returning.");
 			return;
 		}
+
+        if (DEBUG) this.getLogger().info("handling right-click event!");
 
 		// we are handling the event, so don't allow block placement (with either hand)
 		event.setCancelled(true);

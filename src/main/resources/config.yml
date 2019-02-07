@@ -1,6 +1,7 @@
 TeleportationRunes:
   enabled: true
   costFormula: (distance / 10)
+  enableRotation: false
 
   blueprint:
     materials:
