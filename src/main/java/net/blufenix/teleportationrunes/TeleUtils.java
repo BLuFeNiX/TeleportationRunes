@@ -2,6 +2,8 @@ package net.blufenix.teleportationrunes;
 
 import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
+import de.congrace.exp4j.UnknownFunctionException;
+import de.congrace.exp4j.UnparsableExpressionException;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -92,25 +94,9 @@ public class TeleUtils {
             return false;
         }
 
-        // calculate teleport distance
-        double distance = existingWaypoint.loc.distance(teleporterLoc);
-
         try {
 
-            int deltaX = Math.abs(existingWaypoint.loc.getBlockX() - teleporterLoc.getBlockX());
-            int deltaY = Math.abs(existingWaypoint.loc.getBlockY() - teleporterLoc.getBlockY());
-            int deltaZ = Math.abs(existingWaypoint.loc.getBlockZ() - teleporterLoc.getBlockZ());
-            int numEntities = player.isInsideVehicle() ? 2 : 1;
-
-            Calculable calc = new ExpressionBuilder(Config.costFormula)
-                    .withVariable("distance", distance)
-                    .withVariable("deltaX", deltaX)
-                    .withVariable("deltaY", deltaY)
-                    .withVariable("deltaZ", deltaZ)
-                    .withVariable("numEntities", numEntities)
-                    .build();
-
-            int fee = (int) Math.ceil(calc.calculate());
+            int fee = calculateFee(existingWaypoint.loc, teleporterLoc, player);
             int currentExp = ExpUtil.getTotalExperience(player);
 
             if (currentExp >= fee) {
@@ -161,14 +147,11 @@ public class TeleUtils {
                 player.getWorld().strikeLightningEffect(adjustedLoc);
 
                 TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc + " to " + adjustedLoc);
-                player.sendMessage(ChatColor.GREEN + "Teleportation successful!");
-                player.sendMessage(ChatColor.GREEN + "You traveled " + ((int) distance) + " blocks at the cost of " + fee + " experience points.");
                 return true;
             } else {
                 player.sendMessage(ChatColor.RED + "You do not have enough experience to use this teleporter.");
                 player.sendMessage(ChatColor.RED + "Your Exp: " + currentExp);
                 player.sendMessage(ChatColor.RED + "Exp needed: " + fee);
-                player.sendMessage(ChatColor.RED + "Distance: " + ((int) distance) + " blocks");
                 return false;
             }
 
@@ -176,6 +159,25 @@ public class TeleUtils {
             player.sendMessage(ChatColor.RED + "TeleportationRunes cost formula is invalid. Please inform your server administrator.");
             return false;
         }
+    }
+
+    public static int calculateFee(Location waypointLoc, Location teleporterLoc, Player player) throws UnparsableExpressionException, UnknownFunctionException {
+        // calculate teleport distance
+        double distance = waypointLoc.distance(teleporterLoc);
+        int deltaX = Math.abs(waypointLoc.getBlockX() - teleporterLoc.getBlockX());
+        int deltaY = Math.abs(waypointLoc.getBlockY() - teleporterLoc.getBlockY());
+        int deltaZ = Math.abs(waypointLoc.getBlockZ() - teleporterLoc.getBlockZ());
+        int numEntities = player.isInsideVehicle() ? 2 : 1;
+
+        Calculable calc = new ExpressionBuilder(Config.costFormula)
+                .withVariable("distance", distance)
+                .withVariable("deltaX", deltaX)
+                .withVariable("deltaY", deltaY)
+                .withVariable("deltaZ", deltaZ)
+                .withVariable("numEntities", numEntities)
+                .build();
+
+        return (int) Math.ceil(calc.calculate());
     }
 
 }

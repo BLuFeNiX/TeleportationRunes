@@ -41,17 +41,26 @@ public class TeleportTask extends BukkitRunnable {
     }
 
     private boolean startTeleportationTask() {
-        teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
-        if (teleporter == null) return false;
-        waypoint = TeleUtils.getWaypointForTeleporter(teleporter);
-        if (waypoint == null) return false;
+        try {
+            teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
+            if (teleporter == null) return false;
+            waypoint = TeleUtils.getWaypointForTeleporter(teleporter);
+            if (waypoint == null) return false;
 
-        // start teleport animation and timer
-        animation = SwirlAnimation.getDefault();
-        animation.setLocation(teleporter.loc.clone().add(Vectors.UP));
+            // show the player the cost
+            int fee = TeleUtils.calculateFee(waypoint.loc, teleporter.loc, player);
+            player.sendTitle("", fee+" XP");
 
-        runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
-        return true;
+            // start teleport animation and timer
+            animation = SwirlAnimation.getDefault();
+            animation.setLocation(teleporter.loc.clone().add(Vectors.UP));
+
+            runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
+            return true;
+        } catch (Exception e) {
+            TeleportationRunes.getInstance().getLogger().warning("error in startTeleportationTask!");
+            return false;
+        }
     }
 
     @Override
