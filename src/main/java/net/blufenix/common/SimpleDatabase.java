@@ -58,7 +58,7 @@ public class SimpleDatabase {
                 return con;
             }
             else {
-                TeleportationRunes.getInstance().getLogger().log(Level.WARNING, "NULL connection returned from queue.");
+                Log.e("NULL connection returned from queue.");
             }
         }
         return getNewConnection();
@@ -69,7 +69,7 @@ public class SimpleDatabase {
     }
 
     private Connection getNewConnection() {
-        TeleportationRunes.getInstance().getLogger().log(Level.INFO, "Creating new database connection: "+connectionPool.size()+1);
+        Log.d("Creating new database connection: "+connectionPool.size()+1);
         try {
             return DriverManager.getConnection(DB_URL);
         } catch (SQLException e) {
@@ -95,7 +95,7 @@ public class SimpleDatabase {
     }
 
     private Object rawQuery(StatementType statementType, String sql) {
-        TeleportationRunes.getInstance().getLogger().log(Level.FINE, "Executing SQL: "+sql);
+        Log.d("Executing SQL: "+sql);
 
         Connection connection = borrowConnection();
         try {

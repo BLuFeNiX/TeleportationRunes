@@ -1,5 +1,6 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,8 +12,6 @@ import org.bukkit.util.Vector;
  * Created by blufenix on 8/1/15.
  */
 public class BlockUtil {
-
-    private static final boolean DEBUG = false;
 
     private static class LazyHolder {
         public static final int[] ROTATIONS = Config.enableRotation ? new int[]{0,90,180,270} : new int[]{0};
@@ -60,28 +59,7 @@ public class BlockUtil {
 
     // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block
     private static boolean isBlockAtVectorOfStructure(Block block, Blueprint.RotatedBlueprint blueprint) {
-        Location loc = block.getLocation();
-        Blueprint.Block[][][] structure = blueprint.materialMatrix;
-        Vector vector = blueprint.clickableVector;
-
-        Location tempLoc = loc.clone().subtract(vector);
-
-        for (int i = 0; i < structure.length; i++) {
-            Blueprint.Block[][] layer = structure[i];
-            for (int j = 0; j < layer.length; j++) {
-                Blueprint.Block[] row = structure[i][j];
-                for (int k = 0; k < row.length; k++) {
-                    Material mat = row[k].getMaterial();
-                    if (mat != null && tempLoc.clone().add(j, -i, k).getBlock().getType() != mat) {
-                        if (DEBUG) TeleportationRunes.getInstance().getLogger().info("needed: " + mat
-                                + " but got: " + tempLoc.clone().add(j, -i, k).getBlock().getType().name());
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return isLocationAtVectorOfStructure(block.getLocation(), blueprint);
     }
 
     // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block
@@ -98,8 +76,7 @@ public class BlockUtil {
                 for (int k = 0; k < row.length; k++) {
                     Material mat = row[k].getMaterial();
                     if (mat != null && tempLoc.clone().add(j, -i, k).getBlock().getType() != mat) {
-                        if (DEBUG) TeleportationRunes.getInstance().getLogger().info("needed: " + mat
-                                + " but got: " + tempLoc.clone().add(j, -i, k).getBlock().getType().name());
+                        //Log.d("needed: %s but got: %s", mat.toString(), tempLoc.clone().add(j, -i, k).getBlock().getType().name());
                         return false;
                     }
                 }
@@ -115,11 +92,11 @@ public class BlockUtil {
      * run on next tick, otherwise part of the mirage (typically the block that was clicked to activate it)
      * will be re-updated on the client side, making the mirage incomplete
      */
-    public static void showMirage(final Player p, final Block block, final Blueprint.RotatedBlueprint blueprint) {
+    public static void showMirage(final Player p, final Location loc, final Blueprint.RotatedBlueprint blueprint) {
         Bukkit.getScheduler().runTaskLater(TeleportationRunes.getInstance(), new Runnable() {
             @Override
             public void run() {
-                doPattern(p, block, blueprint, new BlockInteractor() {
+                doPattern(p, loc, blueprint, new BlockInteractor() {
                     @Override
                     void onInteract(Player p, Location loc, Blueprint.Block bblock) {
                         if (bblock.getMaterial() != null) {
@@ -138,8 +115,7 @@ public class BlockUtil {
     /**
      * Iterate over the supplied blueprint, in reference to the clicked block, and run the supplied BlockInteractor on them
      */
-    private static void doPattern(Player p, Block block, Blueprint.RotatedBlueprint blueprint, BlockInteractor blockInteractor) {
-        Location loc = block.getLocation();
+    private static void doPattern(Player p, Location loc, Blueprint.RotatedBlueprint blueprint, BlockInteractor blockInteractor) {
         Blueprint.Block[][][] structure = blueprint.materialMatrix;
         Vector vector = blueprint.clickableVector;
 
@@ -160,11 +136,11 @@ public class BlockUtil {
     public static boolean isSafe(Location loc) {
         Material mat1 = loc.clone().add(Vectors.UP).getBlock().getType();
         Material mat2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
-
-        TeleportationRunes.getInstance().getLogger().info(mat1.name());
+        Material mat3 = loc.clone().add(Vectors.UP).add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
         return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent() || mat1.name().contains("STEP"))
-                && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent());
+                && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent())
+                && (mat3 == Material.AIR || mat3 == Material.WATER || mat3.isTransparent());
     }
 
     private static abstract class BlockInteractor {

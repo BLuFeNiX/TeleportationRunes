@@ -1,5 +1,6 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -36,8 +37,7 @@ public class TeleportChecker extends BukkitRunnable {
                 }).execute();
 
             } catch (Throwable t) {
-                TeleportationRunes.getInstance().getLogger().warning("whoops! "+t.getMessage());
-                t.printStackTrace();
+                Log.e("whoops!", t);
             }
         }
     }

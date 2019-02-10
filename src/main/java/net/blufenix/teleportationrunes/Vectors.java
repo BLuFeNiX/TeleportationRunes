@@ -9,6 +9,7 @@ import org.bukkit.util.Vector;
 public class Vectors {
 
     public static final Vector UP = new Vector(0, 1, 0);
+    public static final Vector UP_HALF = new Vector(0, 0.1, 0);
     public static final Vector UP_A_LITTLE = new Vector(0, 0.1, 0);
     public static final Vector DOWN = new Vector(0, -1, 0);
     public static final Vector NORTH = new Vector(0, 0, -1);

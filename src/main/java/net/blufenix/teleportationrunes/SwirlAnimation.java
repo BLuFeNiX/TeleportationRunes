@@ -1,5 +1,6 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -100,7 +101,7 @@ public class SwirlAnimation {
             elapsedTicks %= duration;
             lastElapsedTicks = -1;
         } else if (elapsedTicks > duration) {
-            TeleportationRunes.getInstance().getLogger().warning("animation finished. not ticking!");
+            Log.e("animation finished. not ticking!");
             return;
         }
 

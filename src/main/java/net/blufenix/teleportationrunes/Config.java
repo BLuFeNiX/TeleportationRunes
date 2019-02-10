@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Config {
 
     public static boolean enabled;
+    public static boolean debug;
     public static String costFormula;
     public static boolean enableRotation;
 
@@ -28,6 +29,7 @@ public class Config {
     private static void load() {
         FileConfiguration config = plugin.getConfig();
         enabled = config.getBoolean("TeleportationRunes.enabled");
+        debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
 

@@ -1,5 +1,8 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -49,7 +52,10 @@ public class TeleportTask extends BukkitRunnable {
 
             // show the player the cost
             int fee = TeleUtils.calculateFee(waypoint.loc, teleporter.loc, player);
-            player.sendTitle("", fee+" XP");
+            int currentExp = ExpUtil.getTotalExperience(player);
+            String msg = String.format("%d XP / %d XP", fee, currentExp);
+            //player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
+            player.sendTitle("", msg);
 
             // start teleport animation and timer
             animation = SwirlAnimation.getDefault();
@@ -58,7 +64,7 @@ public class TeleportTask extends BukkitRunnable {
             runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
             return true;
         } catch (Exception e) {
-            TeleportationRunes.getInstance().getLogger().warning("error in startTeleportationTask!");
+            Log.e("error in startTeleportationTask!");
             return false;
         }
     }
@@ -79,7 +85,6 @@ public class TeleportTask extends BukkitRunnable {
 
         if (elapsedTicks < COUNTDOWN_TICKS) {
             animation.update(elapsedTicks);
-            //if (elapsedTicks % 20 == 0) player.sendMessage("Teleporting in " + ((COUNTDOWN_TICKS-elapsedTicks)/20) + "...");
         } else {
             TeleUtils.attemptTeleport(player, teleporter.loc, waypoint);
             onSuccessOrFail();

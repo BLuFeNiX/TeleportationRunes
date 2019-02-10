@@ -1,5 +1,6 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 
@@ -9,8 +10,6 @@ import java.util.logging.Logger;
  * Represents the 4 blocks that act as the unique key between a waypoint and its teleporters
  */
 public class Signature {
-
-	private static final boolean DEBUG = false;
 
 	public final BlockState north;
 	public final BlockState south;
@@ -31,13 +30,9 @@ public class Signature {
 		BlockState south = tempLoc.clone().add(blueprint.signatureVectors[1]).getBlock().getState();
 		BlockState east = tempLoc.clone().add(blueprint.signatureVectors[2]).getBlock().getState();
 		BlockState west = tempLoc.clone().add(blueprint.signatureVectors[3]).getBlock().getState();
-        if (DEBUG) {
-        	Logger log = TeleportationRunes.getInstance().getLogger();
-			log.info(north.toString());
-			log.info(south.toString());
-			log.info(east.toString());
-			log.info(west.toString());
-		}
+
+//		Log.d("NSEW: %s, %s, %s, %s", north.toString(), south.toString(), east.toString(), west.toString());
+
 		return new Signature(north, south, east, west);
     }
 	

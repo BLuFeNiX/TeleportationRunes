@@ -1,7 +1,8 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -27,14 +28,14 @@ public class DebugMirage {
         }
     }
 
-    public static boolean handleMirage(Player player, Block blockClicked) {
+    public static boolean handleMirage(Player player, Location loc) {
         if (playersPendingWaypointMirage.remove(player)) {
-            TeleportationRunes.getInstance().getLogger().info("showing waypoint mirage!");
-            BlockUtil.showMirage(player, blockClicked, Config.waypointBlueprint.atRotation(0));
+            Log.d("showing waypoint mirage!");
+            BlockUtil.showMirage(player, loc, Config.waypointBlueprint.atRotation(0));
             return true;
         } else if (playersPendingTeleporterMirage.remove(player)) {
-            TeleportationRunes.getInstance().getLogger().info("showing teleporter mirage!");
-            BlockUtil.showMirage(player, blockClicked, Config.teleporterBlueprint.atRotation(0));
+            Log.d("showing teleporter mirage!");
+            BlockUtil.showMirage(player, loc, Config.teleporterBlueprint.atRotation(0));
             return true;
         }
 

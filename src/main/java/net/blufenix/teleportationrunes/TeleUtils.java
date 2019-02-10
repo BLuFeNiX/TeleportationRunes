@@ -4,14 +4,13 @@ import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
 import de.congrace.exp4j.UnknownFunctionException;
 import de.congrace.exp4j.UnparsableExpressionException;
-import org.bukkit.ChatColor;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Particle;
+import net.blufenix.common.Log;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -23,6 +22,9 @@ import static net.blufenix.teleportationrunes.Vectors.*;
  */
 public class TeleUtils {
 
+    /** when iteratively added to a location, will encircle it orthogonal to the Y-axis */
+    private static Vector[] nearbyVectors = {NONE, NORTH, EAST, SOUTH, SOUTH, WEST, WEST, NORTH, NORTH};
+
     public static Teleporter getTeleporterFromLocation(Location loc) {
         int rotation;
         if ((rotation = BlockUtil.isTeleporter(loc.getBlock())) >= 0) {
@@ -30,8 +32,6 @@ public class TeleUtils {
         }
         return null;
     }
-
-    private static Vector[] nearbyVectors = {NONE, NORTH, EAST, SOUTH, SOUTH, WEST, WEST, NORTH, NORTH};
 
     public static Teleporter getTeleporterNearLocation(Location loc) {
         Teleporter teleporter;
@@ -57,7 +57,7 @@ public class TeleUtils {
         return attemptTeleport(player, blockLocation, existingWaypoint);
     }
 
-    public static boolean attemptTeleport(Player player, Location teleporterLoc, Waypoint existingWaypoint) {
+    public static boolean attemptTeleport(final Player player, Location teleporterLoc, Waypoint existingWaypoint) {
 
         WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
 
@@ -100,20 +100,14 @@ public class TeleUtils {
             int currentExp = ExpUtil.getTotalExperience(player);
 
             if (currentExp >= fee) {
-                // subtract EXP
-                player.giveExp(-fee);
-
-                // slightly imprecise calculation seems to cause player xp to be set to negative integer max value
-                // so, fix it.
-                if (ExpUtil.getTotalExperience(player) <= 0) {
-                    player.setExp(0);
-                }
-
                 // teleport player
                 Location playerLoc = player.getLocation();
-                Location adjustedLoc = existingWaypoint.loc.clone().add(Vectors.UP).add(Vectors.CENTER); // teleport to the middle of the block, and one block up
+                // ... to the middle of the block, and one block up
+                Location adjustedLoc = existingWaypoint.loc.clone()
+                        .add(Vectors.UP)
+                        .add(Vectors.UP)
+                        .add(Vectors.CENTER);
                 adjustedLoc.setDirection(playerLoc.getDirection());
-                player.getWorld().playEffect(playerLoc, Effect.MOBSPAWNER_FLAMES, 0);
 
                 // check if the player has any leashed animals to teleport as well
                 // TODO add to numEntities (can player be riding and leash the same/different entity?)
@@ -128,25 +122,53 @@ public class TeleUtils {
                 }
 
                 if (player.isInsideVehicle()) {
-                    Vehicle vehicle = (Vehicle) player.getVehicle();
+                    final Vehicle vehicle = (Vehicle) player.getVehicle();
+                    Log.d("player (%s) in vehicle (%s)", player.getDisplayName(), vehicle.getClass().getSimpleName());
                     vehicle.eject();
-                    vehicle.teleport(adjustedLoc);
-                    player.teleport(adjustedLoc);
-                    vehicle.setPassenger(player);
+                    if (!vehicle.teleport(adjustedLoc, PlayerTeleportEvent.TeleportCause.PLUGIN)) {
+                        throw new TeleportException("failed to teleport vehicle!");
+                    }
+                    if (!player.teleport(adjustedLoc, PlayerTeleportEvent.TeleportCause.PLUGIN)) {
+                        // try to get the vehicle back
+                        if (vehicle.teleport(playerLoc, PlayerTeleportEvent.TeleportCause.PLUGIN)) {
+                            vehicle.addPassenger(player);
+                        }
+                        throw new TeleportException("failed to teleport player with vehicle!");
+                    }
+
+                    // if we try to board a horse too quickly, it breaks the teleport for both parties
+                    Bukkit.getScheduler().runTaskLater(TeleportationRunes.getInstance(), new Runnable() {
+                        @Override
+                        public void run() {
+                            vehicle.addPassenger(player);
+                        }
+                    }, 4);
+
                 } else {
-                    player.teleport(adjustedLoc);
+                    if (!player.teleport(adjustedLoc, PlayerTeleportEvent.TeleportCause.PLUGIN)) {
+                        throw new TeleportException("failed to teleport player!");
+                    }
                 }
 
-                // port them leashed animals as well if there are any
+                // port leashed animals as well if there are any
                 for (LivingEntity le : leashedEntities) {
-                    le.teleport(adjustedLoc);
+                    le.teleport(adjustedLoc); // todo check if successful, and what to do if not?
                     le.setLeashHolder(player);
                     player.spawnParticle(Particle.HEART, adjustedLoc, 1);
                 }
 
                 player.getWorld().strikeLightningEffect(adjustedLoc);
 
-                TeleportationRunes.getInstance().getLogger().info(player.getName() + " teleported from " + playerLoc + " to " + adjustedLoc);
+                // subtract EXP
+                player.giveExp(-fee);
+
+                // slightly imprecise calculation seems to cause player xp to be set to negative integer max value
+                // so, fix it.
+                if (ExpUtil.getTotalExperience(player) <= 0) {
+                    player.setExp(0);
+                }
+
+                Log.d(player.getName() + " teleported from " + playerLoc + " to " + adjustedLoc);
                 return true;
             } else {
                 player.sendMessage(ChatColor.RED + "You do not have enough experience to use this teleporter.");
@@ -156,7 +178,8 @@ public class TeleUtils {
             }
 
         } catch (Exception e) {
-            player.sendMessage(ChatColor.RED + "TeleportationRunes cost formula is invalid. Please inform your server administrator.");
+            Log.e("error in attemptTeleport()", e);
+            player.sendMessage(ChatColor.RED + "Something went wrong. Please inform your server administrator.");
             return false;
         }
     }
@@ -177,7 +200,7 @@ public class TeleUtils {
                 .withVariable("numEntities", numEntities)
                 .build();
 
-        return (int) Math.ceil(calc.calculate());
+        return (int) Math.round(calc.calculate());
     }
 
 }
