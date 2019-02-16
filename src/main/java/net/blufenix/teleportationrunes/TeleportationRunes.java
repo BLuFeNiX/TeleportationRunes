@@ -86,11 +86,14 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		PlayerInventory inv = player.getInventory();
 		ItemStack mainItem = inv.getItemInMainHand();
 	    if (mainItem != null) {
-			if (BookOfEnder.getMeta().equals(mainItem.getItemMeta())) {
-				holdingBOE = true;
-			} else if (ScrollOfWarp.getMeta().getDisplayName().equals(mainItem.getItemMeta().getDisplayName())) {
-				holdingSOW = true;
-			}
+            ItemMeta meta = mainItem.getItemMeta();
+            if (meta != null) {
+                if (BookOfEnder.getMeta().equals(meta)) {
+                    holdingBOE = true;
+                } else if (ScrollOfWarp.getMeta().getDisplayName().equals(meta.getDisplayName())) {
+                    holdingSOW = true;
+                }
+            }
 		}
 
 		if (!holdingBOE && !holdingSOW) {
