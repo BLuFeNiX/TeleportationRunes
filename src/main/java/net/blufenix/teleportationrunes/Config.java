@@ -1,6 +1,5 @@
 package net.blufenix.teleportationrunes;
 
-import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,5 +44,8 @@ public class Config {
     public static void reload() {
         plugin.reloadConfig();
         load();
+        if (!enabled) {
+            TeleportationRunes.getInstance().getPluginLoader().disablePlugin(TeleportationRunes.getInstance());
+        }
     }
 }

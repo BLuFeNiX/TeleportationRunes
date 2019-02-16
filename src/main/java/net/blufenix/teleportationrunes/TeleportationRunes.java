@@ -63,13 +63,13 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	@Override
 	public void onDisable() {
 		super.onDisable();
-        teleportCheckerTask.cancel();
+        if (teleportCheckerTask != null) teleportCheckerTask.cancel();
         waypointDB.closeConnections();
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 
 	@EventHandler
-	public void onPlayerInteractBlock(PlayerInteractEvent event) {
+	public void onPlayerInteractEvent(PlayerInteractEvent event) {
 
 		// only activate on right-click
 		Action action = event.getAction();
@@ -94,10 +94,13 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
             }
 		}
 
+	    // do nothing if the player isn't holding a book or scroll in their main hand
 		if (!holdingBOE && !holdingSOW) {
 			return;
 		}
 
+		// even if they are holding a key item, do nothing if they are interacting with certain blocks
+		// ex: crafting table, hopper, chest, etc.
 		Block blockClicked = event.getClickedBlock();
 		if (BlockUtil.isPlayerInteractableWithoutSpecialItem(blockClicked)) {
 			Log.d("NOT handling right-click event (player interacting with block overrides us)");
@@ -109,82 +112,88 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		// we are handling the event, so don't allow block placement (with either hand)
 		event.setCancelled(true);
 
+		// ignore the off-hand event, as this listener will run once for each hand
 		if (event.getHand() == EquipmentSlot.OFF_HAND) {
 			Log.d("ignoring off-hand");
 			return;
 		}
 
-	    Location blockLocation = blockClicked != null ? blockClicked.getLocation() : null;
+		// pass the player and block location onto a more specific handler
+		Location blockLocation = blockClicked != null ? blockClicked.getLocation() : null;
+		if (holdingBOE) {
+			handleBookOfEnderAction(player, blockLocation);
+		} else {
+			handleScrollOfWarpAction(player, blockLocation);
+		}
+	}
 
+	private void handleBookOfEnderAction(Player player, Location blockLocation) {
 		int rotation;
-	    if (holdingBOE) {
-			if ((rotation = BlockUtil.isTeleporter(blockClicked)) >= 0) {
-				Log.d("teleporter clicked!");
-				TeleUtils.attemptTeleport(player, blockLocation, rotation);
-			} else if ((rotation = BlockUtil.isWaypoint(blockClicked)) >= 0) {
-				Log.d("waypoint clicked!");
-				Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
-				// register waypoint
-				Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
-				if (existingWaypoint == null) {
-					Log.d("clicked waypoint does not already exist in DB; adding now.");
-					waypointDB.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
-					player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
-				} else if (existingWaypoint.loc.equals(blockLocation)) {
-					Log.d("clicked waypoint exists in DB, and location matches.");
-					player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
-				} else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(rotation)))) {
-					Log.d("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
-					// TODO change remove/add to update
-					waypointDB.removeWaypoint(existingWaypoint);
-					waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
-					player.sendMessage(StringResources.WAYPOINT_CHANGED);
+		if ((rotation = BlockUtil.isWaypoint(blockLocation)) >= 0) {
+			Log.d("waypoint clicked!");
+			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
+			// register waypoint
+			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
+			if (existingWaypoint == null) {
+				Log.d("clicked waypoint does not already exist in DB; adding now.");
+				waypointDB.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
+				player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
+			} else if (existingWaypoint.loc.equals(blockLocation)) {
+				Log.d("clicked waypoint exists in DB, and location matches.");
+				player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
+			} else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(rotation)))) {
+				Log.d("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
+				// TODO change remove/add to update
+				waypointDB.removeWaypoint(existingWaypoint);
+				waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
+				player.sendMessage(StringResources.WAYPOINT_CHANGED);
+			} else {
+				Log.d("waypoint with this signature already exists, not registering this one");
+				player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+			}
+		} else if (!DebugMirage.handleMirage(player, blockLocation)) {
+			Log.d("neither teleporter nor waypoint clicked");
+			player.sendTitle("", "You must click the center of a waypoint...");
+		}
+	}
+
+	private void handleScrollOfWarpAction(Player player, Location blockLocation) {
+		final ItemStack scrollStack = player.getInventory().getItemInMainHand();
+		// attune scroll
+		int rotation;
+		if ((rotation = BlockUtil.isWaypoint(blockLocation)) >= 0) {
+			Log.d("waypoint clicked (scroll in hand)!");
+			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
+			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
+			if (existingWaypoint != null && existingWaypoint.loc.equals(blockLocation)) {
+				Log.d("waypoint valid! trying to attune scroll");
+				ItemMeta meta = scrollStack.getItemMeta();
+				meta.setLore(sig.getLoreEncoding());
+				scrollStack.setItemMeta(meta);
+				int num = scrollStack.getAmount();
+				if (num == 1) {
+					player.sendTitle("", "1 scroll attuned...");
 				} else {
-					Log.d("waypoint with this signature already exists, not registering this one");
-					player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+					player.sendTitle("", num+" scrolls attuned...");
 				}
-			} else if (!DebugMirage.handleMirage(player, blockLocation)) {
-				Log.d("neither teleporter nor waypoint clicked");
-				player.sendTitle("", "You must click the center of a waypoint...");
+			} else {
+				player.sendTitle("", "This waypoint has not been activated...");
 			}
-		} else { // we know holdingSOW is true
-            final ItemStack scrollStack = player.getInventory().getItemInMainHand();
-	    	// attune scroll
-			if ((rotation = BlockUtil.isWaypoint(blockClicked)) >= 0) {
-				Log.d("waypoint clicked (scroll in hand)!");
-				Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
-				Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
-				if (existingWaypoint.loc.equals(blockLocation)) {
-					Log.d("waypoint valid! trying to attune scroll");
-					ItemMeta meta = scrollStack.getItemMeta();
-					meta.setLore(sig.getLoreEncoding());
-                    scrollStack.setItemMeta(meta);
-                    int num = scrollStack.getAmount();
-                    if (num == 1) {
-                        player.sendTitle("", "1 scroll attuned...");
-                    } else {
-                        player.sendTitle("", num+" scrolls attuned...");
-                    }
-				}
-			} else { // use scroll
-
-				Signature sig = Signature.fromLoreEncoding(scrollStack.getItemMeta().getLore());
-				if (sig != null) {
-                    Log.d("starting teleport task...");
-                    new TeleportTask(player, sig, new TeleportTask.Callback() {
-                        @Override
-                        void onFinished(boolean success) {
-                            if (success) {
-                                scrollStack.setAmount(scrollStack.getAmount() - 1);
-                            }
-                        }
-                    }).execute();
-                } else {
-				    player.sendTitle("", "Scroll not attuned...");
-                }
-
+		} else { // use scroll
+			Signature sig = Signature.fromLoreEncoding(scrollStack.getItemMeta().getLore());
+			if (sig != null) {
+				Log.d("starting teleport task...");
+				new TeleportTask(player, sig, new TeleportTask.Callback() {
+					@Override
+					void onFinished(boolean success) {
+						if (success) {
+							scrollStack.setAmount(scrollStack.getAmount() - 1);
+						}
+					}
+				}).execute();
+			} else {
+				player.sendTitle("", "Scroll not attuned...");
 			}
-
 		}
 	}
 

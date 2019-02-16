@@ -16,28 +16,6 @@ public class BlockUtil {
         public static final int[] ROTATIONS = Config.enableRotation ? new int[]{0,90,180,270} : new int[]{0};
     }
 
-    public static int isTeleporter(Block block) {
-        if (block == null) return -1;
-        for (int rotation : LazyHolder.ROTATIONS) {
-            if (isBlockAtVectorOfStructure(block, Config.teleporterBlueprint.atRotation(rotation))) {
-                return rotation;
-            }
-        }
-
-        return -1;
-    }
-
-    public static int isWaypoint(Block block) {
-        if (block == null) return -1;
-        for (int rotation : LazyHolder.ROTATIONS) {
-            if (isBlockAtVectorOfStructure(block, Config.waypointBlueprint.atRotation(rotation))) {
-                return rotation;
-            }
-        }
-
-        return -1;
-    }
-
     public static int isTeleporter(Location loc) {
         if (loc == null) return -1;
         for (int rotation : LazyHolder.ROTATIONS) {
@@ -58,11 +36,6 @@ public class BlockUtil {
         }
 
         return -1;
-    }
-
-    // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block
-    private static boolean isBlockAtVectorOfStructure(Block block, Blueprint.RotatedBlueprint blueprint) {
-        return isLocationAtVectorOfStructure(block.getLocation(), blueprint);
     }
 
     // can't use the new BlockInteractor here, since we want to return immediately if we get a non-matching block

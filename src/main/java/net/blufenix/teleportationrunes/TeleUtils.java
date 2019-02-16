@@ -27,7 +27,7 @@ public class TeleUtils {
 
     public static Teleporter getTeleporterFromLocation(Location loc) {
         int rotation;
-        if ((rotation = BlockUtil.isTeleporter(loc.getBlock())) >= 0) {
+        if ((rotation = BlockUtil.isTeleporter(loc)) >= 0) {
             return new Teleporter(loc, rotation);
         }
         return null;
@@ -54,15 +54,6 @@ public class TeleUtils {
         return waypointDB.getWaypointFromSignature(sig);
     }
 
-    public static boolean attemptTeleport(Player player, Location blockLocation, int rotation) {
-        WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
-
-        Signature sig = Signature.fromLocation(blockLocation, Config.teleporterBlueprint.atRotation(rotation));
-        Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
-
-        return attemptTeleport(player, blockLocation, existingWaypoint);
-    }
-
     public static boolean attemptTeleport(final Player player, Location teleporterLoc, Waypoint existingWaypoint) {
 
         WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
@@ -75,7 +66,7 @@ public class TeleUtils {
 
         // make sure the waypoint hasn't been destroyed
         int waypointRotation;
-        if ((waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc.getBlock())) < 0) {
+        if ((waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc)) < 0) {
             player.sendMessage(StringResources.WAYPOINT_DAMAGED);
             waypointDB.removeWaypoint(existingWaypoint);
             return false;
@@ -177,7 +168,7 @@ public class TeleUtils {
                 Log.d(player.getName() + " teleported from " + playerLoc + " to " + adjustedLoc);
                 return true;
             } else {
-                player.sendMessage(ChatColor.RED + "You do not have enough experience to use this teleporter.");
+                player.sendMessage(ChatColor.RED + "You do not have enough experience to teleport.");
                 player.sendMessage(ChatColor.RED + "Your Exp: " + currentExp);
                 player.sendMessage(ChatColor.RED + "Exp needed: " + fee);
                 return false;

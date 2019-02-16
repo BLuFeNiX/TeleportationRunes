@@ -11,8 +11,6 @@ public class StringResources {
     public static final String UNLOADED = "TeleportationRunes has been unloaded!";
     public static final String DISABLED = "TeleportationRunes is disabled!";
 
-    public static final String BAD_VEHICLE = ChatColor.RED+"Teleportation failed. You must be on foot or riding a horse to teleport.";
-
     public static final String WAYPOINT_ACTIVATED = ChatColor.GREEN+"Waypoint activated!";
     public static final String WAYPOINT_ALREADY_ACTIVE = ChatColor.RED+"This waypoint is already active.";
     public static final String WAYPOINT_CHANGED = ChatColor.GREEN+"Old waypoint was altered or damaged. New waypoint activated!";
