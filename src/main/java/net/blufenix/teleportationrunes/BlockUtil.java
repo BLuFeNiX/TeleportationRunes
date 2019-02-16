@@ -109,12 +109,13 @@ public class BlockUtil {
     }
 
     // todo configurable safety for water to avoid drowning
+    // todo only enable extra height check when using a horse?
     public static boolean isSafe(Location loc) {
         Material mat1 = loc.clone().add(Vectors.UP).getBlock().getType();
         Material mat2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
         Material mat3 = loc.clone().add(Vectors.UP).add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
-        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent() || mat1.name().contains("STEP"))
+        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent() || mat1.name().contains("SLAB") || mat1.name().contains("STEP"))
                 && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent())
                 && (mat3 == Material.AIR || mat3 == Material.WATER || mat3.isTransparent());
     }

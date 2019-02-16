@@ -118,6 +118,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			return;
 		}
 
+		// TODO allow clicking on the block directly above as well?
 		// pass the player and block location onto a more specific handler
 		Location blockLocation = blockClicked != null ? blockClicked.getLocation() : null;
 		if (holdingBOE) {
