@@ -44,8 +44,14 @@ public class TeleUtils {
     }
 
     public static Waypoint getWaypointForTeleporter(Teleporter teleporter) {
+        if (teleporter == null) return null;
+        return getWaypointForSignature(teleporter.sig);
+    }
+
+    public static Waypoint getWaypointForSignature(Signature sig) {
+        if (sig == null) return null;
         WaypointDB waypointDB = TeleportationRunes.getInstance().getWaypointDB();
-        return waypointDB.getWaypointFromSignature(teleporter.sig);
+        return waypointDB.getWaypointFromSignature(sig);
     }
 
     public static boolean attemptTeleport(Player player, Location blockLocation, int rotation) {

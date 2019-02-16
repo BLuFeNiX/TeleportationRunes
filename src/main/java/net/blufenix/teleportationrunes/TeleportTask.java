@@ -1,8 +1,6 @@
 package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -21,37 +19,44 @@ public class TeleportTask extends BukkitRunnable {
     private int elapsedTicks = 0;
 
     private final Player player;
-    private final Location potentialTeleporterLoc;
-
-    private Teleporter teleporter;
-    private Waypoint waypoint;
+    private final Location sourceLoc;
+    private final Waypoint destWaypoint;
+    private final boolean canLeaveArea;
 
     private SwirlAnimation animation;
     private boolean isRunning;
 
     TeleportTask(Player player, Location potentialTeleporterLoc, Callback callback) {
         this.player = player;
-        this.potentialTeleporterLoc = potentialTeleporterLoc;
         this.callback = callback;
+        Teleporter teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
+        this.sourceLoc = teleporter != null ? teleporter.loc : null;
+        this.destWaypoint = TeleUtils.getWaypointForTeleporter(teleporter);
+        canLeaveArea = false;
+    }
+
+    TeleportTask(Player player, Signature waypointSignature, Callback callback) {
+        this.player = player;
+        this.callback = callback;
+        this.sourceLoc = player.getLocation();
+        this.destWaypoint = TeleUtils.getWaypointForSignature(waypointSignature);
+        this.canLeaveArea = true;
     }
 
     public void execute() {
         if (startTeleportationTask()) {
             isRunning = true;
         } else {
-            onSuccessOrFail();
+            onSuccessOrFail(false);
         }
     }
 
     private boolean startTeleportationTask() {
         try {
-            teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
-            if (teleporter == null) return false;
-            waypoint = TeleUtils.getWaypointForTeleporter(teleporter);
-            if (waypoint == null) return false;
+            if (sourceLoc == null || destWaypoint == null) return false;
 
             // show the player the cost
-            int fee = TeleUtils.calculateFee(waypoint.loc, teleporter.loc, player);
+            int fee = TeleUtils.calculateFee(destWaypoint.loc, sourceLoc, player);
             int currentExp = ExpUtil.getTotalExperience(player);
             String msg = String.format("%d XP / %d XP", fee, currentExp);
             //player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
@@ -59,7 +64,11 @@ public class TeleportTask extends BukkitRunnable {
 
             // start teleport animation and timer
             animation = SwirlAnimation.getDefault();
-            animation.setLocation(teleporter.loc.clone().add(Vectors.UP));
+            if (canLeaveArea) {
+                animation.setLocation(player);
+            } else {
+                animation.setLocation(sourceLoc.clone().add(Vectors.UP));
+            }
 
             runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
             return true;
@@ -77,33 +86,36 @@ public class TeleportTask extends BukkitRunnable {
         // TODO is there a cleaner way to fix this and remove the time shift?
         elapsedTicks += UPDATE_INTERVAL_TICKS;
 
-        if (!playerStillAtTeleporter()) {
+        if (!canLeaveArea && !playerStillAtTeleporter()) {
             player.sendMessage("You left the teleporter area. Cancelling...");
-            onSuccessOrFail();
+            onSuccessOrFail(false);
             return;
         }
 
         if (elapsedTicks < COUNTDOWN_TICKS) {
             animation.update(elapsedTicks);
         } else {
-            TeleUtils.attemptTeleport(player, teleporter.loc, waypoint);
-            onSuccessOrFail();
+            if (TeleUtils.attemptTeleport(player, sourceLoc, destWaypoint)) {
+                onSuccessOrFail(true);
+            } else {
+                onSuccessOrFail(false);
+            }
         }
 
     }
 
-    private void onSuccessOrFail() {
+    private void onSuccessOrFail(boolean success) {
         if (isRunning) this.cancel();
         if (callback != null) {
-            callback.onFinished();
+            callback.onFinished(success);
         }
     }
 
     private boolean playerStillAtTeleporter() {
-        return player.getLocation().distance(potentialTeleporterLoc) < 2;
+        return player.getLocation().distance(sourceLoc) < 2;
     }
 
     public static abstract class Callback {
-        abstract void onFinished();
+        abstract void onFinished(boolean success);
     }
 }

@@ -4,6 +4,7 @@ import net.blufenix.common.Log;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 public class SwirlAnimation {
@@ -17,6 +18,7 @@ public class SwirlAnimation {
     private Particle[] particles;
     private int numParticles;
     private boolean repeat;
+    private Entity trackedEntity = null;
 
     private double degreesPerTick;
     private int lastElapsedTicks = -1;
@@ -75,6 +77,16 @@ public class SwirlAnimation {
         return this;
     }
 
+    public SwirlAnimation setLocation(Entity trackedEntity) {
+        this.trackedEntity = trackedEntity;
+        this.world  = trackedEntity.getLocation().getWorld();
+        return this;
+    }
+
+    private Location getBaseAnimationLocation() {
+        return trackedEntity != null ? trackedEntity.getLocation().clone() : location.clone();
+    }
+
     public SwirlAnimation setParticle(Particle... particles) {
         this.particles = particles;
         return this;
@@ -119,7 +131,7 @@ public class SwirlAnimation {
     private void onTick(int tick) {
         for (int segment = 0; segment < compiledVectors[tick].length; segment++) {
             for (Particle p : particles) {
-                world.spawnParticle(p, location.clone().add(compiledVectors[tick][segment]), numParticles, null);
+                world.spawnParticle(p, getBaseAnimationLocation().add(compiledVectors[tick][segment]), numParticles, null);
             }
         }
     }

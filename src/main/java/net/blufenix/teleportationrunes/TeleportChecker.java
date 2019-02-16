@@ -31,7 +31,7 @@ public class TeleportChecker extends BukkitRunnable {
 
                 new TeleportTask(p, potentialTeleporterLoc, new TeleportTask.Callback() {
                     @Override
-                    void onFinished() {
+                    void onFinished(boolean success) {
                         playersCurrentlyTeleporting.remove(p);
                     }
                 }).execute();

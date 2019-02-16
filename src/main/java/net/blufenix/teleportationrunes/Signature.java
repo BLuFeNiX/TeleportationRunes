@@ -1,10 +1,10 @@
 package net.blufenix.teleportationrunes;
 
-import net.blufenix.common.Log;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 
-import java.util.logging.Logger;
+import java.nio.charset.Charset;
 
 /**
  * Represents the 4 blocks that act as the unique key between a waypoint and its teleporters
@@ -52,5 +52,39 @@ public class Signature {
 		if (obj == this) return true;
 		return obj instanceof Signature && equals((Signature) obj);
 	}
-	
+
+	public String getEncoded() {
+		StringBuilder sb = new StringBuilder();
+		for (BlockState blockState : new BlockState[]{north, south, east, west}) {
+			sb.append(blockState.getType().name());
+			sb.append(":");
+			sb.append(new String(new byte[]{blockState.getData().getData()}, Charset.defaultCharset()));
+			sb.append(";");
+		}
+		return sb.toString();
+	}
+
+	// can't make one of these by implementing the interface
+	// since it causes reflection issues
+	private static BlockState getDonor(Material material, byte aByte) {
+		BlockState donor = TeleportationRunes.getInstance().getServer().getWorld("world").getBlockAt(100, 100, 100).getState();
+		donor.setType(material);
+		donor.getData().setData(aByte);
+		return donor;
+	}
+
+	public static Signature fromEncoded(String encoded) {
+		String[] parts = encoded.split(";");
+		String[] n = parts[0].split(":");
+		String[] s = parts[1].split(":");
+		String[] e = parts[2].split(":");
+		String[] w = parts[3].split(":");
+
+		BlockState north = getDonor(Material.getMaterial(n[0]), n[1].getBytes(Charset.defaultCharset())[0]);
+		BlockState south = getDonor(Material.getMaterial(s[0]), s[1].getBytes(Charset.defaultCharset())[0]);
+		BlockState east = getDonor(Material.getMaterial(e[0]), e[1].getBytes(Charset.defaultCharset())[0]);
+		BlockState west = getDonor(Material.getMaterial(w[0]), w[1].getBytes(Charset.defaultCharset())[0]);
+
+		return new Signature(north, south, east, west);
+	}
 }

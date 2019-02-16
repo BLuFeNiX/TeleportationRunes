@@ -1,6 +1,5 @@
 package net.blufenix.teleportationrunes;
 
-import net.blufenix.common.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,6 +17,7 @@ public class BlockUtil {
     }
 
     public static int isTeleporter(Block block) {
+        if (block == null) return -1;
         for (int rotation : LazyHolder.ROTATIONS) {
             if (isBlockAtVectorOfStructure(block, Config.teleporterBlueprint.atRotation(rotation))) {
                 return rotation;
@@ -28,6 +28,7 @@ public class BlockUtil {
     }
 
     public static int isWaypoint(Block block) {
+        if (block == null) return -1;
         for (int rotation : LazyHolder.ROTATIONS) {
             if (isBlockAtVectorOfStructure(block, Config.waypointBlueprint.atRotation(rotation))) {
                 return rotation;
@@ -38,6 +39,7 @@ public class BlockUtil {
     }
 
     public static int isTeleporter(Location loc) {
+        if (loc == null) return -1;
         for (int rotation : LazyHolder.ROTATIONS) {
             if (isLocationAtVectorOfStructure(loc, Config.teleporterBlueprint.atRotation(rotation))) {
                 return rotation;
@@ -48,6 +50,7 @@ public class BlockUtil {
     }
 
     public static int isWaypoint(Location loc) {
+        if (loc == null) return -1;
         for (int rotation : LazyHolder.ROTATIONS) {
             if (isLocationAtVectorOfStructure(loc, Config.waypointBlueprint.atRotation(rotation))) {
                 return rotation;
@@ -145,6 +148,96 @@ public class BlockUtil {
 
     private static abstract class BlockInteractor {
         abstract void onInteract(Player p, Location loc, Blueprint.Block bblock);
+    }
+
+    public static boolean isPlayerInteractableWithoutSpecialItem(Block block) {
+        if (block == null) return false;
+        switch(block.getType()) {
+            case ACACIA_BOAT:
+            case ACACIA_BUTTON:
+            case ACACIA_DOOR:
+            case ACACIA_FENCE_GATE:
+            case ACACIA_TRAPDOOR:
+            case ANVIL:
+            case BEACON:
+            case BEDROCK:
+            case BIRCH_BOAT:
+            case BIRCH_BUTTON:
+            case BIRCH_DOOR:
+            case BIRCH_FENCE_GATE:
+            case BIRCH_TRAPDOOR:
+            case BLACK_BED:
+            case BLUE_BED:
+            case BREWING_STAND:
+            case BROWN_BED:
+            case CAKE:
+            case CHAINMAIL_CHESTPLATE:
+            case CHAIN_COMMAND_BLOCK:
+            case CHEST:
+            case CHEST_MINECART:
+            case CHIPPED_ANVIL:
+            case COMMAND_BLOCK:
+            case COMMAND_BLOCK_MINECART:
+            case COMPARATOR:
+            case CRAFTING_TABLE:
+            case CYAN_BED:
+            case DAMAGED_ANVIL:
+            case DARK_OAK_BOAT:
+            case DARK_OAK_BUTTON:
+            case DARK_OAK_DOOR:
+            case DARK_OAK_FENCE_GATE:
+            case DARK_OAK_TRAPDOOR:
+            case DIAMOND_CHESTPLATE:
+            case DISPENSER:
+            case ENCHANTING_TABLE:
+            case ENDER_CHEST:
+            case END_GATEWAY:
+            case END_PORTAL_FRAME:
+            case FURNACE:
+            case FURNACE_MINECART:
+            case GOLDEN_CHESTPLATE:
+            case GRAY_BED:
+            case GREEN_BED:
+            case HOPPER:
+            case HOPPER_MINECART:
+            case IRON_CHESTPLATE:
+            case IRON_DOOR:
+            case IRON_TRAPDOOR:
+            case ITEM_FRAME:
+            case JUNGLE_BOAT:
+            case JUNGLE_BUTTON:
+            case JUNGLE_DOOR:
+            case JUNGLE_FENCE_GATE:
+            case JUNGLE_TRAPDOOR:
+            case LEATHER_CHESTPLATE:
+            case LEVER:
+            case LIGHT_BLUE_BED:
+            case LIGHT_GRAY_BED:
+            case LIME_BED:
+            case MAGENTA_BED:
+            case OAK_BOAT:
+            case OAK_BUTTON:
+            case OAK_DOOR:
+            case OAK_FENCE_GATE:
+            case OAK_TRAPDOOR:
+            case ORANGE_BED:
+            case PINK_BED:
+            case PURPLE_BED:
+            case RED_BED:
+            case REPEATING_COMMAND_BLOCK:
+            case SPRUCE_BOAT:
+            case SPRUCE_BUTTON:
+            case SPRUCE_DOOR:
+            case SPRUCE_FENCE_GATE:
+            case SPRUCE_TRAPDOOR:
+            case STONE_BUTTON:
+            case TRAPPED_CHEST:
+            case WHITE_BED:
+            case YELLOW_BED:
+                return true;
+            default:
+                return false;
+        }
     }
 
 }
