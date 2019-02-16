@@ -5,7 +5,13 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class TeleportTask extends BukkitRunnable {
+
+    // normally this would need to be thread safe, but minecraft only runs on one thread
+    private static Set<Player> playersCurrentlyTeleporting = new HashSet<>();
 
     // modify these
     private static final int COUNTDOWN_SECONDS = 3;
@@ -19,9 +25,11 @@ public class TeleportTask extends BukkitRunnable {
     private int elapsedTicks = 0;
 
     private final Player player;
-    private final Location sourceLoc;
-    private final Waypoint destWaypoint;
     private final boolean canLeaveArea;
+    private Location sourceLoc;
+    private Waypoint destWaypoint;
+    private Location potentialTeleporterLoc;
+    private Signature waypointSignature;
 
     private SwirlAnimation animation;
     private boolean isRunning;
@@ -29,21 +37,41 @@ public class TeleportTask extends BukkitRunnable {
     TeleportTask(Player player, Location potentialTeleporterLoc, Callback callback) {
         this.player = player;
         this.callback = callback;
-        Teleporter teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
-        this.sourceLoc = teleporter != null ? teleporter.loc : null;
-        this.destWaypoint = TeleUtils.getWaypointForTeleporter(teleporter);
+        this.potentialTeleporterLoc = potentialTeleporterLoc;
         canLeaveArea = false;
     }
 
     TeleportTask(Player player, Signature waypointSignature, Callback callback) {
         this.player = player;
         this.callback = callback;
-        this.sourceLoc = player.getLocation();
-        this.destWaypoint = TeleUtils.getWaypointForSignature(waypointSignature);
+        this.waypointSignature = waypointSignature;
         this.canLeaveArea = true;
     }
 
+    private void lateInit() {
+        if (potentialTeleporterLoc != null) {
+            Teleporter teleporter = TeleUtils.getTeleporterNearLocation(potentialTeleporterLoc);
+            this.sourceLoc = teleporter != null ? teleporter.loc : null;
+            this.destWaypoint = TeleUtils.getWaypointForTeleporter(teleporter);
+        } else if (waypointSignature != null) {
+            this.sourceLoc = player.getLocation();
+            this.destWaypoint = TeleUtils.getWaypointForSignature(waypointSignature);
+        } else {
+            throw new RuntimeException("lateInit() failed. bad params?");
+        }
+    }
+
     public void execute() {
+        if (playersCurrentlyTeleporting.contains(player)) {
+            return; //todo this will mean our callback isn't called
+            // but we need it for now in order to prevent repeated teleport attempts
+            // since calling onSuccessOrFail will remove us from playersCurrentlyTeleporting
+            // and right now the callbacks don't need to work in that case.
+        }
+
+        playersCurrentlyTeleporting.add(player);
+        lateInit();
+
         if (startTeleportationTask()) {
             isRunning = true;
         } else {
@@ -109,6 +137,7 @@ public class TeleportTask extends BukkitRunnable {
         if (callback != null) {
             callback.onFinished(success);
         }
+        playersCurrentlyTeleporting.remove(player);
     }
 
     private boolean playerStillAtTeleporter() {

@@ -1,19 +1,13 @@
 package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 public class TeleportChecker extends BukkitRunnable {
-
-    // normally this would need to be thread safe, but minecraft only runs on one thread
-    private static Map<Player, Location> playersCurrentlyTeleporting = new HashMap<>(); // location is teleporter location
 
     public static BukkitTask start() {
         return new TeleportChecker().runTaskTimer(TeleportationRunes.getInstance(), 0, 20);
@@ -24,18 +18,8 @@ public class TeleportChecker extends BukkitRunnable {
         Collection<? extends Player> players = TeleportationRunes.getInstance().getServer().getOnlinePlayers();
         for (final Player p: players) {
             try {
-                if (playersCurrentlyTeleporting.containsKey(p)) continue;
-                final Location potentialTeleporterLoc = p.getLocation().add(Vectors.DOWN);
-
-                playersCurrentlyTeleporting.put(p, potentialTeleporterLoc);
-
-                new TeleportTask(p, potentialTeleporterLoc, new TeleportTask.Callback() {
-                    @Override
-                    void onFinished(boolean success) {
-                        playersCurrentlyTeleporting.remove(p);
-                    }
-                }).execute();
-
+                // todo we could recycle this object, since this runs all the time
+                new TeleportTask(p, p.getLocation().add(Vectors.DOWN), null).execute();
             } catch (Throwable t) {
                 Log.e("whoops!", t);
             }

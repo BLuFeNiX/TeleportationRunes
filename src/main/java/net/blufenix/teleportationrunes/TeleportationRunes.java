@@ -19,8 +19,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.Arrays;
-
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	private static TeleportationRunes _instance;
@@ -116,7 +114,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			return;
 		}
 
-	    Location blockLocation = blockClicked.getLocation();
+	    Location blockLocation = blockClicked != null ? blockClicked.getLocation() : null;
 
 		int rotation;
 	    if (holdingBOE) {
@@ -150,6 +148,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				player.sendTitle("", "You must click the center of a waypoint...");
 			}
 		} else { // we know holdingSOW is true
+            final ItemStack scrollStack = player.getInventory().getItemInMainHand();
 	    	// attune scroll
 			if ((rotation = BlockUtil.isWaypoint(blockClicked)) >= 0) {
 				Log.d("waypoint clicked (scroll in hand)!");
@@ -157,21 +156,33 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
 				if (existingWaypoint.loc.equals(blockLocation)) {
 					Log.d("waypoint valid! trying to attune scroll");
-					ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
-					meta.setLore(Arrays.asList(sig.getEncoded()));
-					player.getInventory().getItemInMainHand().setItemMeta(meta);
+					ItemMeta meta = scrollStack.getItemMeta();
+					meta.setLore(sig.getLoreEncoding());
+                    scrollStack.setItemMeta(meta);
+                    int num = scrollStack.getAmount();
+                    if (num == 1) {
+                        player.sendTitle("", "1 scroll attuned...");
+                    } else {
+                        player.sendTitle("", num+" scrolls attuned...");
+                    }
 				}
 			} else { // use scroll
-				final ItemStack scrollStack = player.getInventory().getItemInMainHand();
-				Signature sig = Signature.fromEncoded(scrollStack.getItemMeta().getLore().get(0));
-				new TeleportTask(player, sig, new TeleportTask.Callback() {
-					@Override
-					void onFinished(boolean success) {
-						if (success) {
-							scrollStack.setAmount(scrollStack.getAmount()-1);
-						}
-					}
-				}).execute();
+
+				Signature sig = Signature.fromLoreEncoding(scrollStack.getItemMeta().getLore());
+				if (sig != null) {
+                    Log.d("starting teleport task...");
+                    new TeleportTask(player, sig, new TeleportTask.Callback() {
+                        @Override
+                        void onFinished(boolean success) {
+                            if (success) {
+                                scrollStack.setAmount(scrollStack.getAmount() - 1);
+                            }
+                        }
+                    }).execute();
+                } else {
+				    player.sendTitle("", "Scroll not attuned...");
+                }
+
 			}
 
 		}

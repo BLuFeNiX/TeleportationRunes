@@ -5,6 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents the 4 blocks that act as the unique key between a waypoint and its teleporters
@@ -64,6 +66,17 @@ public class Signature {
 		return sb.toString();
 	}
 
+    public List<String> getLoreEncoding() {
+        List<String> encoded = new ArrayList<>();
+        StringBuilder blockDataSb = new StringBuilder();
+        for (BlockState blockState : new BlockState[]{north, south, east, west}) {
+            encoded.add(blockState.getType().name());
+            blockDataSb.append(new String(new byte[]{blockState.getData().getData()}, Charset.defaultCharset()));
+        }
+        encoded.add(blockDataSb.toString());
+        return encoded;
+    }
+
 	// can't make one of these by implementing the interface
 	// since it causes reflection issues
 	private static BlockState getDonor(Material material, byte aByte) {
@@ -87,4 +100,21 @@ public class Signature {
 
 		return new Signature(north, south, east, west);
 	}
+
+    public static Signature fromLoreEncoding(List<String> encoded) {
+	    if (encoded.size() != 5) return null;
+
+	    String n = encoded.get(0);
+        String s = encoded.get(1);
+        String e = encoded.get(2);
+        String w = encoded.get(3);
+        byte[] data = encoded.get(4).getBytes(Charset.defaultCharset());
+
+        BlockState north = getDonor(Material.getMaterial(n), data[0]);
+        BlockState south = getDonor(Material.getMaterial(s), data[1]);
+        BlockState east = getDonor(Material.getMaterial(e), data[2]);
+        BlockState west = getDonor(Material.getMaterial(w), data[3]);
+
+        return new Signature(north, south, east, west);
+    }
 }
