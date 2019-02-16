@@ -1,6 +1,7 @@
 name: TeleportationRunes
 main: net.blufenix.teleportationrunes.TeleportationRunes
 version: 1.9.9
+api-version: 1.13
 commands:
    tr:
       description: Show information about Waypoints or reload configuration.
