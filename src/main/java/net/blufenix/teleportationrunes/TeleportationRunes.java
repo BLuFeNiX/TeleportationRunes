@@ -136,7 +136,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
 			if (existingWaypoint == null) {
 				Log.d("clicked waypoint does not already exist in DB; adding now.");
-				waypointDB.addWaypoint(new Waypoint(player.getName(), blockLocation, sig));
+				waypointDB.addWaypoint(new Waypoint(blockLocation, sig));
 				player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
 			} else if (existingWaypoint.loc.equals(blockLocation)) {
 				Log.d("clicked waypoint exists in DB, and location matches.");
@@ -145,7 +145,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				Log.d("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
 				// TODO change remove/add to update
 				waypointDB.removeWaypoint(existingWaypoint);
-				waypointDB.addWaypoint(new Waypoint(existingWaypoint.user, existingWaypoint.loc, sig));
+				waypointDB.addWaypoint(new Waypoint(existingWaypoint.loc, sig));
 				player.sendMessage(StringResources.WAYPOINT_CHANGED);
 			} else {
 				Log.d("waypoint with this signature already exists, not registering this one");
@@ -168,7 +168,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			if (existingWaypoint != null && existingWaypoint.loc.equals(blockLocation)) {
 				Log.d("waypoint valid! trying to attune scroll");
 				ItemMeta meta = scrollStack.getItemMeta();
-				meta.setLore(sig.getLoreEncoding());
+				meta.setLore(sig.asLore());
 				scrollStack.setItemMeta(meta);
 				int num = scrollStack.getAmount();
 				if (num == 1) {
@@ -180,7 +180,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				player.sendTitle("", "This waypoint has not been activated...");
 			}
 		} else { // use scroll
-			Signature sig = Signature.fromLoreEncoding(scrollStack.getItemMeta().getLore());
+			Signature sig = Signature.fromLore(scrollStack.getItemMeta().getLore());
 			if (sig != null) {
 				Log.d("starting teleport task...");
 				new TeleportTask(player, sig, new TeleportTask.Callback() {
@@ -208,6 +208,15 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				} else if ("reload".startsWith(args[0])) {
                     Config.reload();
 					sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
+				} else if ("upgrade".startsWith(args[0])) {
+                	if (sender instanceof Player) {
+						sender.sendMessage(ChatColor.GOLD + "Teleportation Runes upgrading database!");
+						for (Location loc : TeleportationRunes.getInstance().getWaypointDB().getLegacyWaypointLocations()) {
+							handleBookOfEnderAction((Player) sender, loc);
+						}
+					} else {
+						sender.sendMessage(ChatColor.RED + "You must run this as an OP player. Sorry!");
+					}
 				} else if (Config.debug) {
 				    if ("mirage".startsWith(args[0])) {
 				    	if (args.length == 2) {

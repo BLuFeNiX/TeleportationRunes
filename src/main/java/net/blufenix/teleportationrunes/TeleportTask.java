@@ -101,7 +101,7 @@ public class TeleportTask extends BukkitRunnable {
             runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
             return true;
         } catch (Exception e) {
-            Log.e("error in startTeleportationTask!");
+            Log.e("error in startTeleportationTask!", e);
             return false;
         }
     }
