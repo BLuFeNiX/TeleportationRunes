@@ -68,14 +68,14 @@ public class TeleUtils {
         int waypointRotation;
         if ((waypointRotation = BlockUtil.isWaypoint(existingWaypoint.loc)) < 0) {
             player.sendMessage(StringResources.WAYPOINT_DAMAGED);
-            waypointDB.removeWaypoint(existingWaypoint);
+            waypointDB.removeWaypointByLocation(existingWaypoint.loc);
             return false;
         }
 
         // make sure the signature hasn't changed
         if (!existingWaypoint.sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(waypointRotation)))) {
             player.sendMessage(StringResources.WAYPOINT_ALTERED);
-            waypointDB.removeWaypoint(existingWaypoint);
+            waypointDB.removeWaypointByLocation(existingWaypoint.loc);
             return false;
         }
 

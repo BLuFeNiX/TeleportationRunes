@@ -129,28 +129,31 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	}
 
 	private void handleBookOfEnderAction(Player player, Location blockLocation) {
-		int rotation;
-		if ((rotation = BlockUtil.isWaypoint(blockLocation)) >= 0) {
-			Log.d("waypoint clicked!");
-			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
-			// register waypoint
-			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
-			if (existingWaypoint == null) {
-				Log.d("clicked waypoint does not already exist in DB; adding now.");
-				waypointDB.addWaypoint(new Waypoint(blockLocation, sig));
-				player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
-			} else if (existingWaypoint.loc.equals(blockLocation)) {
-				Log.d("clicked waypoint exists in DB, and location matches.");
-				player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
-			} else if (!sig.equals(Signature.fromLocation(existingWaypoint.loc, Config.waypointBlueprint.atRotation(rotation)))) {
-				Log.d("waypoint exists in DB, but blocks were altered. removing old waypoint and adding this one.");
-				// TODO change remove/add to update
-				waypointDB.removeWaypoint(existingWaypoint);
-				waypointDB.addWaypoint(new Waypoint(existingWaypoint.loc, sig));
-				player.sendMessage(StringResources.WAYPOINT_CHANGED);
-			} else {
-				Log.d("waypoint with this signature already exists, not registering this one");
-				player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+		Waypoint waypoint = Waypoint.fromLocation(blockLocation);
+
+		if (waypoint != null) {
+			switch (waypoint.status) {
+				case Waypoint.EXISTS_VERIFIED:
+					Log.d("clicked waypoint exists in DB, and signature matches.");
+					player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
+					break;
+				case Waypoint.EXISTS_CONFLICT:
+					Log.d("waypoint with this signature already exists, not registering this one");
+					player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+					break;
+				case Waypoint.EXISTS_MODIFIED:
+					// no conflict with new signature
+					Log.d("waypoint exists in DB, but signature was altered. updating...");
+					// TODO change remove/add to update
+					getWaypointDB().removeWaypointByLocation(waypoint.loc);
+					getWaypointDB().addWaypoint(waypoint);
+					player.sendMessage(StringResources.WAYPOINT_CHANGED);
+					break;
+				case Waypoint.NOT_EXISTS:
+					Log.d("clicked waypoint does not already exist in DB; adding now.");
+					waypointDB.addWaypoint(waypoint);
+					player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
+					break;
 			}
 		} else if (!DebugMirage.handleMirage(player, blockLocation)) {
 			Log.d("neither teleporter nor waypoint clicked");
@@ -160,16 +163,13 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	private void handleScrollOfWarpAction(Player player, Location blockLocation) {
 		final ItemStack scrollStack = player.getInventory().getItemInMainHand();
-		// attune scroll
-		int rotation;
-		if ((rotation = BlockUtil.isWaypoint(blockLocation)) >= 0) {
-			Log.d("waypoint clicked (scroll in hand)!");
-			Signature sig = Signature.fromLocation(blockLocation, Config.waypointBlueprint.atRotation(rotation));
-			Waypoint existingWaypoint = waypointDB.getWaypointFromSignature(sig);
-			if (existingWaypoint != null && existingWaypoint.loc.equals(blockLocation)) {
+		Waypoint waypoint = Waypoint.fromLocation(blockLocation);
+
+		if (waypoint != null) {
+			if (waypoint.status == Waypoint.EXISTS_VERIFIED) {
 				Log.d("waypoint valid! trying to attune scroll");
 				ItemMeta meta = scrollStack.getItemMeta();
-				meta.setLore(sig.asLore());
+				meta.setLore(waypoint.sig.asLore());
 				scrollStack.setItemMeta(meta);
 				int num = scrollStack.getAmount();
 				if (num == 1) {
@@ -196,6 +196,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				player.sendTitle("", "Scroll not attuned...");
 			}
 		}
+
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {

@@ -44,14 +44,24 @@ public class WaypointDB extends SimpleDatabase {
                 waypoint.loc.getWorld().getName(),
                 (int)waypoint.loc.getX(), (int)waypoint.loc.getY(), (int)waypoint.loc.getZ(),
                 waypoint.sig.north, waypoint.sig.south, waypoint.sig.east, waypoint.sig.west);
-        return execute(sql);
+        boolean success = execute(sql);
+        if (success) waypoint.status = Waypoint.EXISTS_VERIFIED;
+        return success;
     }
 
-    public boolean removeWaypoint(Waypoint waypoint) {
+    public boolean removeWaypointBySignature(Signature sig) {
         String sql = String.format(
                 "DELETE FROM %s WHERE north = '%s' AND south = '%s' AND east = '%s' AND west = '%s'",
                 WAYPOINT_TABLE,
-                waypoint.sig.north, waypoint.sig.south, waypoint.sig.east, waypoint.sig.west);
+                sig.north, sig.south, sig.east, sig.west);
+        return execute(sql);
+    }
+
+    public boolean removeWaypointByLocation(Location loc) {
+        String sql = String.format(
+                "DELETE FROM %s WHERE world = '%s' AND x = %d AND y = %d AND z = %d",
+                WAYPOINT_TABLE,
+                loc.getWorld().getName(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ());
         return execute(sql);
     }
 
@@ -73,6 +83,27 @@ public class WaypointDB extends SimpleDatabase {
 
                 // reuse input signature, since all of its members are final
                 return new Waypoint(loc, sig);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+
+        return null;
+    }
+
+    public Waypoint getWaypointFromLocation(Location loc) {
+        String sql = String.format(
+                "SELECT north, south, east, west FROM %s WHERE world = '%s' AND x = %d AND y = %d AND z = %d",
+                WAYPOINT_TABLE,
+                loc.getWorld().getName(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ());
+
+        ResultSet rs = query(sql);
+        try {
+            if (rs.next()) {
+                String n = rs.getString(1);
+                String s = rs.getString(2);
+                String e = rs.getString(3);
+                String w = rs.getString(4);
+
+                return new Waypoint(loc.clone(), new Signature(n, s, e, w));
             }
         } catch (SQLException e) { e.printStackTrace(); }
 

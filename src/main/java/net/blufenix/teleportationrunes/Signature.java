@@ -15,7 +15,7 @@ public class Signature {
 	public final String east;
 	public final String west;
 
-	private Signature(String north, String south, String east, String west) {
+	public Signature(String north, String south, String east, String west) {
 		this.north = north;
 		this.south = south;
 		this.east = east;
