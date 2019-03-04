@@ -137,7 +137,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 					Log.d("clicked waypoint exists in DB, and signature matches.");
 					player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 					break;
-				case Waypoint.EXISTS_CONFLICT:
+				case Waypoint.EXISTS_MODIFIED_CONFLICT:
 					Log.d("waypoint with this signature already exists, not registering this one");
 					player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
 					break;
@@ -184,10 +184,12 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			Signature sig = Signature.fromLore(scrollStack.getItemMeta().getLore());
 			if (sig != null) {
 				Log.d("starting teleport task...");
-				new TeleportTask(player, sig, new TeleportTask.Callback() {
+				new TeleportTask(player, sig, true, new TeleportTask.Callback() {
 					@Override
 					void onFinished(boolean success) {
 						if (success) {
+							// TODO prevent player from throwing scrolls on the ground
+							// ex: remove from inventory before teleport, and add back if failure
 							scrollStack.setAmount(scrollStack.getAmount() - 1);
 						}
 					}

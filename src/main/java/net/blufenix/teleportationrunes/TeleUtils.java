@@ -93,7 +93,7 @@ public class TeleUtils {
 
         try {
 
-            int fee = calculateFee(existingWaypoint.loc, teleporterLoc, player);
+            int fee = calculateFee(existingWaypoint.loc, teleporterLoc);
             int currentExp = ExpUtil.getTotalExperience(player);
 
             if (currentExp >= fee) {
@@ -181,20 +181,12 @@ public class TeleUtils {
         }
     }
 
-    public static int calculateFee(Location waypointLoc, Location teleporterLoc, Player player) throws UnparsableExpressionException, UnknownFunctionException {
+    public static int calculateFee(Location waypointLoc, Location teleporterLoc) throws UnparsableExpressionException, UnknownFunctionException {
         // calculate teleport distance
         double distance = waypointLoc.distance(teleporterLoc);
-        int deltaX = Math.abs(waypointLoc.getBlockX() - teleporterLoc.getBlockX());
-        int deltaY = Math.abs(waypointLoc.getBlockY() - teleporterLoc.getBlockY());
-        int deltaZ = Math.abs(waypointLoc.getBlockZ() - teleporterLoc.getBlockZ());
-        int numEntities = player.isInsideVehicle() ? 2 : 1;
 
         Calculable calc = new ExpressionBuilder(Config.costFormula)
                 .withVariable("distance", distance)
-                .withVariable("deltaX", deltaX)
-                .withVariable("deltaY", deltaY)
-                .withVariable("deltaZ", deltaZ)
-                .withVariable("numEntities", numEntities)
                 .build();
 
         return (int) Math.round(calc.calculate());

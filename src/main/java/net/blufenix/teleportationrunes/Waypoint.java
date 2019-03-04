@@ -10,7 +10,7 @@ public class Waypoint {
     public static final int NOT_EXISTS = 0;
     public static final int EXISTS_MODIFIED = 1;
     public static final int EXISTS_VERIFIED = 2;
-    public static final int EXISTS_CONFLICT = 3;
+    public static final int EXISTS_MODIFIED_CONFLICT = 3;
 
     public final Location loc;
     public final Signature sig;
@@ -51,7 +51,7 @@ public class Waypoint {
                 waypoint.status = EXISTS_VERIFIED;
             } else if (!db.getWaypointFromSignature(waypoint.sig).loc.equals(waypoint.loc)) {
                 // another waypoint exists in the DB with the same signature
-                waypoint.status = EXISTS_CONFLICT;
+                waypoint.status = EXISTS_MODIFIED_CONFLICT;
             } else {
                 waypoint = new Waypoint(waypoint.loc, expectedSignature, EXISTS_MODIFIED);
             }

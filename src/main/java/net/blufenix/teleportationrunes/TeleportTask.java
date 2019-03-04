@@ -1,6 +1,9 @@
 package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -26,6 +29,7 @@ public class TeleportTask extends BukkitRunnable {
 
     private final Player player;
     private final boolean canLeaveArea;
+    private final boolean requireSneak;
     private Location sourceLoc;
     private Waypoint destWaypoint;
     private Location potentialTeleporterLoc;
@@ -39,13 +43,15 @@ public class TeleportTask extends BukkitRunnable {
         this.callback = callback;
         this.potentialTeleporterLoc = potentialTeleporterLoc;
         canLeaveArea = false;
+        requireSneak = false;
     }
 
-    TeleportTask(Player player, Signature waypointSignature, Callback callback) {
+    TeleportTask(Player player, Signature waypointSignature, boolean requireSneak, Callback callback) {
         this.player = player;
         this.callback = callback;
         this.waypointSignature = waypointSignature;
         this.canLeaveArea = true;
+        this.requireSneak = requireSneak;
     }
 
     private void lateInit() {
@@ -84,26 +90,31 @@ public class TeleportTask extends BukkitRunnable {
             if (sourceLoc == null || destWaypoint == null) return false;
 
             // show the player the cost
-            int fee = TeleUtils.calculateFee(destWaypoint.loc, sourceLoc, player);
+            int fee = TeleUtils.calculateFee(destWaypoint.loc, sourceLoc);
             int currentExp = ExpUtil.getTotalExperience(player);
             String msg = String.format("%d XP / %d XP", fee, currentExp);
             //player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
             player.sendTitle("", msg);
 
-            // start teleport animation and timer
-            animation = SwirlAnimation.getDefault();
-            if (canLeaveArea) {
-                animation.setLocation(player);
+            if (requireSneak && !player.isSneaking()) {
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("[sneak to confirm]"));
             } else {
-                animation.setLocation(sourceLoc.clone().add(Vectors.UP));
-            }
+                // start teleport animation and timer
+                animation = SwirlAnimation.getDefault();
+                if (canLeaveArea) {
+                    animation.setLocation(player);
+                } else {
+                    animation.setLocation(sourceLoc.clone().add(Vectors.UP));
+                }
 
-            runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
-            return true;
+                runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
+                return true;
+            }
         } catch (Exception e) {
             Log.e("error in startTeleportationTask!", e);
-            return false;
         }
+
+        return false;
     }
 
     @Override
