@@ -1,6 +1,11 @@
 # TeleportationRunes
 A command-less teleportation plugin for Minecraft (compatible with Bukkit, Spigot, and Paper).
 
+## Building
+```
+mvn prepare-package package
+```
+
 ## Installation
 Place `TeleportationRunes.jar` in your plugins folder, and restart your server.
 
