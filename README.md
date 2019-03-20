@@ -29,9 +29,9 @@ In this example they are dirt, log, and glass blocks.
 ### Teleportation Scrolls
 
 1. Follow steps 1 through 3 in the section above, but do not build a teleporter.
-2. Craft a **Scroll Of Ender**
+2. Craft a **Scroll Of Warp**
 ![Scroll of Ender](https://i.imgur.com/j7EHPXp.png)
-3. **While holding the Scroll Of Ender** right click the center block of your waypoint, in order to attune the scrolls.
+3. **While holding the Scroll Of Warp** right click the center block of your waypoint, in order to attune the scrolls.
 4. From anywhere in the same world, you may now *right-click* while holding the scroll, in order to teleport.
 ![Teleport via scroll](https://i.imgur.com/4SU9JAi.jpg)
 
