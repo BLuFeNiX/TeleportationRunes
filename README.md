@@ -37,6 +37,10 @@ In this example they are dirt, log, and glass blocks.
 
 > Note: You must **crouch (hold shift) to confirm** the teleportation when using a scroll.
 
+### Hiding Teleporters & Waypoints
+
+You may cover the top of a teleporter or waypoint in a layer of blocks, and it will still function normally.
+
 ## Configuration & Customization
 
 ### Cost Formula
