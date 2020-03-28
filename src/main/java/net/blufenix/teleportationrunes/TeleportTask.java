@@ -104,7 +104,11 @@ public class TeleportTask extends BukkitRunnable {
                 if (canLeaveArea) {
                     animation.setLocation(player);
                 } else {
-                    animation.setLocation(sourceLoc.clone().add(Vectors.UP));
+                    // make the animation occur at the player's height
+                    // in case they are hiding the teleporter under a layer of blocks
+                    Location animLoc = sourceLoc.clone();
+                    animLoc.setY(player.getLocation().getY());
+                    animation.setLocation(animLoc);
                 }
 
                 runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
@@ -152,7 +156,7 @@ public class TeleportTask extends BukkitRunnable {
     }
 
     private boolean playerStillAtTeleporter() {
-        return player.getLocation().distance(sourceLoc) < 2;
+        return player.getLocation().distance(sourceLoc) < 2.5;
     }
 
     public static abstract class Callback {

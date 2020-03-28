@@ -29,6 +29,9 @@ public class TeleUtils {
         int rotation;
         if ((rotation = BlockUtil.isTeleporter(loc)) >= 0) {
             return new Teleporter(loc, rotation);
+        // check one more block down
+        } else if ((rotation = BlockUtil.isTeleporter(loc.add(DOWN))) >= 0) {
+            return new Teleporter(loc, rotation);
         }
         return null;
     }
@@ -79,12 +82,6 @@ public class TeleUtils {
             return false;
         }
 
-        // make sure teleport destination won't suffocate the player
-        if (!BlockUtil.isSafe(existingWaypoint.loc)) {
-            player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
-            return false;
-        }
-
         // is the destination in our current world?
         if (!existingWaypoint.loc.getWorld().equals(teleporterLoc.getWorld())) {
             player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
@@ -99,11 +96,13 @@ public class TeleUtils {
             if (currentExp >= fee) {
                 // teleport player
                 Location playerLoc = player.getLocation();
-                // ... to the middle of the block, and one block up
-                Location adjustedLoc = existingWaypoint.loc.clone()
-                        .add(Vectors.UP)
-                        .add(Vectors.UP)
-                        .add(Vectors.CENTER);
+                Location adjustedLoc = getSafeDestination(existingWaypoint.loc.clone());
+
+                if (adjustedLoc == null) {
+                    player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
+                    return false;
+                }
+
                 adjustedLoc.setDirection(playerLoc.getDirection());
 
                 // check if the player has any leashed animals to teleport as well
@@ -179,6 +178,25 @@ public class TeleUtils {
             player.sendMessage(ChatColor.RED + "Something went wrong. Please inform your server administrator.");
             return false;
         }
+    }
+
+    // make sure teleport destination won't suffocate the player
+    private static Location getSafeDestination(Location loc) {
+        // if this one's not safe, check one block up
+        if (!BlockUtil.isSafe(loc)) {
+            loc.add(UP);
+        }
+
+        // if one block up isn't safe, bail
+        if (!BlockUtil.isSafe(loc)) {
+            return null;
+        }
+
+        loc.add(Vectors.UP)
+           .add(Vectors.UP)
+           .add(Vectors.CENTER);
+
+        return loc;
     }
 
     public static int calculateFee(Location waypointLoc, Location teleporterLoc) throws UnparsableExpressionException, UnknownFunctionException {
