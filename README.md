@@ -3,7 +3,7 @@ A command-less teleportation plugin for Minecraft (compatible with Bukkit, Spigo
 
 ## Building
 ```
-mvn prepare-package package
+mvn clean package
 ```
 
 ## Installation

@@ -1,6 +1,5 @@
 package net.blufenix.teleportationrunes;
 
-import net.blufenix.common.JarUtils;
 import net.blufenix.common.Log;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -38,7 +37,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
     public void onLoad() {
         super.onLoad();
         _instance = this;
-        JarUtils.loadLibs();
         Config.init(this);
     }
 
