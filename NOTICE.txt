@@ -15,7 +15,7 @@ limitations under the License.
 
 --------
 
-This software depends on the exp4j library, and is included in released JAR files, under the 'de.congace.*' package name.
+This software depends on the exp4j library, and is included in released JAR files, under the 'de.congrace.*' package name.
 No copyright statement is provided with the exp4j software, so none can be reproduced here. However, the software
 itself is Apache 2.0 licensed, and can be found at the following sites:
 https://www.objecthunter.net/exp4j/
