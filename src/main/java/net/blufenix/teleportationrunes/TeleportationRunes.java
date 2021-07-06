@@ -210,15 +210,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				} else if ("reload".startsWith(args[0])) {
                     Config.reload();
 					sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
-				} else if ("upgrade".startsWith(args[0])) {
-                	if (sender instanceof Player) {
-						sender.sendMessage(ChatColor.GOLD + "Teleportation Runes upgrading database!");
-						for (Location loc : TeleportationRunes.getInstance().getWaypointDB().getLegacyWaypointLocations()) {
-							handleBookOfEnderAction((Player) sender, loc);
-						}
-					} else {
-						sender.sendMessage(ChatColor.RED + "You must run this as an OP player. Sorry!");
-					}
 				} else if (Config.debug) {
 				    if ("mirage".startsWith(args[0])) {
 				    	if (args.length == 2) {

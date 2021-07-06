@@ -116,28 +116,4 @@ public class WaypointDB extends SimpleDatabase {
         return null;
     }
 
-    // TODO remove after a while
-    public List<Location> getLegacyWaypointLocations() {
-        List<Location> legacyLocations = new ArrayList<>();
-
-        // make sure we close the Statement as well
-        try (ResultSet rs = query(String.format("SELECT world, x, y, z FROM %s", WAYPOINT_TABLE_LEGACY)); Statement stmt = rs.getStatement()) {
-            while (rs.next()) {
-                String worldName = rs.getString(1);
-                int x = rs.getInt(2);
-                int y = rs.getInt(3);
-                int z = rs.getInt(4);
-
-                World world = TeleportationRunes.getInstance().getServer().getWorld(worldName);
-                Location loc = new Location(world, x, y, z);
-
-                legacyLocations.add(loc);
-            }
-        } catch (SQLException e) {
-            Log.e("query error", e);
-        }
-
-        return legacyLocations;
-    }
-
 }
