@@ -7,6 +7,7 @@ import org.bukkit.World;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,8 +72,8 @@ public class WaypointDB extends SimpleDatabase {
                 "SELECT * FROM %s WHERE north = '%s' AND south = '%s' AND east = '%s' AND west = '%s'",
                 WAYPOINT_TABLE,
                 sig.north, sig.south, sig.east, sig.west);
-        ResultSet rs = query(sql);
-        try {
+        // make sure we close the Statement as well
+        try (ResultSet rs = query(sql); Statement stmt = rs.getStatement()){
             if (rs.next()) {
                 String worldName = rs.getString(1);
                 int x = rs.getInt(2);
@@ -98,8 +99,8 @@ public class WaypointDB extends SimpleDatabase {
                 WAYPOINT_TABLE,
                 loc.getWorld().getName(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ());
 
-        ResultSet rs = query(sql);
-        try {
+        // make sure we close the Statement as well
+        try (ResultSet rs = query(sql); Statement stmt = rs.getStatement()){
             if (rs.next()) {
                 String n = rs.getString(1);
                 String s = rs.getString(2);
@@ -118,8 +119,9 @@ public class WaypointDB extends SimpleDatabase {
     // TODO remove after a while
     public List<Location> getLegacyWaypointLocations() {
         List<Location> legacyLocations = new ArrayList<>();
-        ResultSet rs = query(String.format("SELECT world, x, y, z FROM %s", WAYPOINT_TABLE_LEGACY));
-        try {
+
+        // make sure we close the Statement as well
+        try (ResultSet rs = query(String.format("SELECT world, x, y, z FROM %s", WAYPOINT_TABLE_LEGACY)); Statement stmt = rs.getStatement()) {
             while (rs.next()) {
                 String worldName = rs.getString(1);
                 int x = rs.getInt(2);
