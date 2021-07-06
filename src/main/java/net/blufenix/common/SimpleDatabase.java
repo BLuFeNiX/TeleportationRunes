@@ -5,7 +5,6 @@ import net.blufenix.teleportationrunes.TeleportationRunes;
 import java.sql.*;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
 
 /**
  * Created by blufenix on 7/27/15.
@@ -84,38 +83,41 @@ public class SimpleDatabase {
         return DB_FILE_PATH;
     }
 
-    protected boolean execute(String sql) {
-        return (Boolean) rawQuery(StatementType.EXECUTE, sql);
+    protected boolean execute(String sql) throws SQLException {
+        return (Boolean) rawQuery(StatementType.EXECUTE, sql, null);
     }
 
-    protected ResultSet query(String sql) {
-        return (ResultSet) rawQuery(StatementType.QUERY, sql);
+    protected Object query(String sql, QueryHandler<?> handler) throws SQLException {
+        return rawQuery(StatementType.QUERY, sql, handler);
     }
 
-    protected boolean update(String sql) {
-        return (Boolean) rawQuery(StatementType.UPDATE, sql);
+    protected boolean update(String sql) throws SQLException {
+        return (Boolean) rawQuery(StatementType.UPDATE, sql, null);
     }
 
-    private Object rawQuery(StatementType statementType, String sql) {
-        Log.d("Executing SQL: "+sql);
+    // TODO: refactor this logic?
+    //  Previosuly, this method did not correctly clean up ResultSets and Statements, and it did not wait
+    //  until the query was done before returning the connection to the pool.
+    //  This is now fixed with the addition of QueryHandler<T>, but could probably be made cleaner.
+    private Object rawQuery(StatementType statementType, String sql, QueryHandler<?> handler) throws SQLException {
+        Log.d("Executing SQL (%s): %s", statementType.toString(), sql);
 
         Connection connection = borrowConnection();
-        try {
-            Statement stmt = connection.createStatement();
-
+        try (Statement stmt = connection.createStatement()) {
             switch (statementType) {
                 case EXECUTE:
                     return stmt.execute(sql);
                 case QUERY:
-                    return stmt.executeQuery(sql);
+                    if (handler == null) {
+                        throw new IllegalArgumentException("query must use a handler!");
+                    }
+                    return handler.handle0(stmt.executeQuery(sql));
                 case UPDATE:
                     return stmt.executeUpdate(sql);
             }
-        } catch (SQLException e1) {
-            Log.e("query error", e1);
         }
         finally {
-            if (connection != null) {
+            if (connection != null && !connection.isClosed()) {
                 returnConnection(connection);
             }
         }
@@ -125,5 +127,20 @@ public class SimpleDatabase {
 
     private enum StatementType {
         EXECUTE, QUERY, UPDATE
+    }
+
+    public abstract static class QueryHandler<T> {
+        Object handle0(ResultSet resultSet) throws SQLException {
+            try {
+                return handle(resultSet);
+            } finally {
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    Log.e("error closing resultSet", e);
+                }
+            }
+        }
+        protected abstract T handle(ResultSet resultSet) throws SQLException;
     }
 }
