@@ -1,5 +1,6 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import net.blufenix.common.SimpleDatabase;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -84,7 +85,9 @@ public class WaypointDB extends SimpleDatabase {
                 // reuse input signature, since all of its members are final
                 return new Waypoint(loc, sig);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            Log.e("query error", e);
+        }
 
         return null;
     }
@@ -105,7 +108,9 @@ public class WaypointDB extends SimpleDatabase {
 
                 return new Waypoint(loc.clone(), new Signature(n, s, e, w));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            Log.e("query error", e);
+        }
 
         return null;
     }
@@ -126,7 +131,9 @@ public class WaypointDB extends SimpleDatabase {
 
                 legacyLocations.add(loc);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            Log.e("query error", e);
+        }
 
         return legacyLocations;
     }

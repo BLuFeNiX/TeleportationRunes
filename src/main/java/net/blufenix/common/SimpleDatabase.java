@@ -31,7 +31,7 @@ public class SimpleDatabase {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            Log.e("can't load JDBC driver", e);
         }
     }
 
@@ -48,7 +48,9 @@ public class SimpleDatabase {
                     con.close();
                 }
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            Log.e("error closing connections", e);
+        }
     }
 
     private Connection borrowConnection() {
@@ -73,7 +75,7 @@ public class SimpleDatabase {
         try {
             return DriverManager.getConnection(DB_URL);
         } catch (SQLException e) {
-            e.printStackTrace();
+            Log.e("can't get DB connection", e);
         }
         return null;
     }
@@ -109,8 +111,9 @@ public class SimpleDatabase {
                 case UPDATE:
                     return stmt.executeUpdate(sql);
             }
-
-        } catch (SQLException e1) { e1.printStackTrace(); }
+        } catch (SQLException e1) {
+            Log.e("query error", e1);
+        }
         finally {
             if (connection != null) {
                 returnConnection(connection);
