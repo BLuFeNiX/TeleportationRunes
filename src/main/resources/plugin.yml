@@ -1,6 +1,6 @@
 name: TeleportationRunes
 main: net.blufenix.teleportationrunes.TeleportationRunes
-version: 2.0.1
+version: 2.0.2-freebsd-dev
 api-version: 1.13
 commands:
    tr:

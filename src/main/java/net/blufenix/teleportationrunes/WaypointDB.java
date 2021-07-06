@@ -33,10 +33,10 @@ public class WaypointDB extends SimpleDatabase {
                     "x INTEGER NOT NULL, " +
                     "y INTEGER NOT NULL, " +
                     "z INTEGER NOT NULL, " +
-                    "north STRING NOT NULL, " +
-                    "south STRING NOT NULL, " +
-                    "east STRING NOT NULL, " +
-                    "west STRING NOT NULL)"
+                    "north TEXT NOT NULL, " +
+                    "south TEXT NOT NULL, " +
+                    "east TEXT NOT NULL, " +
+                    "west TEXT NOT NULL)"
             );
         } catch (SQLException e) {
             Log.e("query error", e);
@@ -121,7 +121,7 @@ public class WaypointDB extends SimpleDatabase {
 
     public Waypoint getWaypointFromLocation(final Location loc) {
         String sql = String.format(
-                "SELECT north, south, east, west FROM %s WHERE world = '%s' AND x = %d AND y = %d AND z = %d",
+                "SELECT north, south, east, west FROM %s WHERE %1$s.world = '%s' AND x = %d AND y = %d AND z = %d",
                 WAYPOINT_TABLE,
                 loc.getWorld().getName(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ());
 

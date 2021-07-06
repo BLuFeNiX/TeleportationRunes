@@ -21,14 +21,16 @@ public class SimpleDatabase {
 
     public SimpleDatabase(String filename) {
         this.DB_FILE_PATH = BASE_PATH + "/" + filename;
-        this.DB_URL = "jdbc:sqlite:"+DB_FILE_PATH;
+//        this.DB_URL = "jdbc:sqlite:"+DB_FILE_PATH;
+        this.DB_URL = "jdbc:hsqldb:"+DB_FILE_PATH+";sql.syntax_pgs=true;hsqldb.lock_file=false";
         loadDriver();
         openConnections();
     }
 
     private static void loadDriver() {
         try {
-            Class.forName("org.sqlite.JDBC");
+//            Class.forName("org.sqlite.JDBC");
+            Class.forName("org.hsqldb.jdbcDriver");
         } catch (ClassNotFoundException e) {
             Log.e("can't load JDBC driver", e);
         }
