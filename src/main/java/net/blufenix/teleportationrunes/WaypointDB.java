@@ -7,29 +7,28 @@ import org.bukkit.World;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Created by blufenix on 7/27/15.
+ * For now, all query syntax must be compatible with both SQLite and HSQLDB in PostgreSQL mode!
  */
 public class WaypointDB extends SimpleDatabase {
 
-    private static final String FILENAME = "waypoints.db";
-
+    private static final String DEFAULT_FILENAME = "waypoints.db";
     private static final String WAYPOINT_TABLE = "waypoints_v2";
-    private static final String WAYPOINT_TABLE_LEGACY = "waypoints";
 
-    WaypointDB() {
-        super(FILENAME);
+    public WaypointDB(Backend backend) {
+        this(backend, DEFAULT_FILENAME);
+    }
+
+    public WaypointDB(Backend backend, String filename) {
+        super(backend, filename);
         createTables();
     }
 
     private void createTables() {
         try {
-            execute("CREATE TABLE IF NOT EXISTS waypoints_v2 " +
-                    "(world TEXT NOT NULL, " +
+            execute("CREATE TABLE IF NOT EXISTS " + WAYPOINT_TABLE +
+                    " (world TEXT NOT NULL, " +
                     "x INTEGER NOT NULL, " +
                     "y INTEGER NOT NULL, " +
                     "z INTEGER NOT NULL, " +
@@ -121,7 +120,7 @@ public class WaypointDB extends SimpleDatabase {
 
     public Waypoint getWaypointFromLocation(final Location loc) {
         String sql = String.format(
-                "SELECT north, south, east, west FROM %s WHERE %1$s.world = '%s' AND x = %d AND y = %d AND z = %d",
+                "SELECT north, south, east, west FROM %s WHERE world = '%s' AND x = %d AND y = %d AND z = %d",
                 WAYPOINT_TABLE,
                 loc.getWorld().getName(), (int)loc.getX(), (int)loc.getY(), (int)loc.getZ());
 

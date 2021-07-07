@@ -16,23 +16,36 @@ public class SimpleDatabase {
 
     private final Queue<Connection> connectionPool = new ConcurrentLinkedQueue<Connection>();
 
+    private final Backend BACKEND;
     private final String DB_FILE_PATH;
     private final String DB_URL;
 
-    public SimpleDatabase(String filename) {
-        this.DB_FILE_PATH = BASE_PATH + "/" + filename;
-//        this.DB_URL = "jdbc:sqlite:"+DB_FILE_PATH;
-        this.DB_URL = "jdbc:hsqldb:"+DB_FILE_PATH+";sql.syntax_pgs=true;hsqldb.lock_file=false";
-        loadDriver();
-        openConnections();
+    public enum Backend {
+        SQLITE,
+        HSQLDB
     }
 
-    private static void loadDriver() {
+    public SimpleDatabase(Backend backend, String filename) {
+        this.BACKEND = backend;
+        this.DB_FILE_PATH = BASE_PATH + "/" + filename;
         try {
-//            Class.forName("org.sqlite.JDBC");
-            Class.forName("org.hsqldb.jdbcDriver");
+            switch (BACKEND) {
+                case SQLITE:
+                    this.DB_URL = "jdbc:sqlite:" + DB_FILE_PATH;
+                    Class.forName("org.sqlite.JDBC");
+                    break;
+                case HSQLDB:
+                    // use PostgreSQL mode, since its syntax is mostly compatible with SQLite
+                    // also disable lock files for now (we should be thread safe due to the way connections are handled)
+                    this.DB_URL = "jdbc:hsqldb:" + DB_FILE_PATH + ";sql.syntax_pgs=true;hsqldb.lock_file=false";
+                    Class.forName("org.hsqldb.jdbcDriver");
+                    break;
+                default:
+                    throw new IllegalArgumentException("You must specify a valid DB backend!");
+            }
+            openConnections();
         } catch (ClassNotFoundException e) {
-            Log.e("can't load JDBC driver", e);
+            throw new RuntimeException("can't load JDBC driver for "+BACKEND, e);
         }
     }
 
@@ -98,7 +111,7 @@ public class SimpleDatabase {
     }
 
     // TODO: refactor this logic?
-    //  Previosuly, this method did not correctly clean up ResultSets and Statements, and it did not wait
+    //  Previously, this method did not correctly clean up ResultSets and Statements, and it did not wait
     //  until the query was done before returning the connection to the pool.
     //  This is now fixed with the addition of QueryHandler<T>, but could probably be made cleaner.
     private Object rawQuery(StatementType statementType, String sql, QueryHandler<?> handler) throws SQLException {

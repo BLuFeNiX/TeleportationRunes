@@ -1,6 +1,7 @@
 package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
+import net.blufenix.common.SimpleDatabase;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -17,6 +18,8 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.util.Arrays;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
@@ -46,7 +49,23 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		if (Config.enabled) {
             getServer().addRecipe(BookOfEnder.getRecipe());
             getServer().addRecipe(ScrollOfWarp.getRecipe());
-            waypointDB = new WaypointDB();
+            SimpleDatabase.Backend backend;
+            // use the configured backend
+			// else use HSQLDB for FreeBSD and SQLite for everything else
+            if (Config.databaseBackend != null) {
+            	try {
+					backend = SimpleDatabase.Backend.valueOf(Config.databaseBackend);
+				} catch (IllegalArgumentException e) {
+            		throw new RuntimeException("bad value for databaseBackend in config.yml: "+Config.databaseBackend
+							+" (expected one of: "+ Arrays.toString(SimpleDatabase.Backend.values()));
+				}
+			} else if ("FreeBSD".equals(System.getProperty("os.name"))) {
+            	backend = SimpleDatabase.Backend.HSQLDB;
+			} else {
+				backend = SimpleDatabase.Backend.SQLITE;
+			}
+			Log.d("Using %s backend for database.", backend);
+			waypointDB = new WaypointDB(backend);
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
             teleportCheckerTask = TeleportChecker.start();

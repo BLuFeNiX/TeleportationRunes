@@ -13,6 +13,7 @@ public class Config {
     public static boolean debug;
     public static String costFormula;
     public static boolean enableRotation;
+    public static String databaseBackend;
 
     public static Blueprint teleporterBlueprint;
     public static Blueprint waypointBlueprint;
@@ -31,6 +32,7 @@ public class Config {
         debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
+        databaseBackend = config.getString("TeleportationRunes.databaseBackend");
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
