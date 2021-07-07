@@ -47,6 +47,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	public void onEnable() {
 		super.onEnable();
 		if (Config.enabled) {
+			MigrationCompat.maybeRelocateDB(); // TODO remove me later
             getServer().addRecipe(BookOfEnder.getRecipe());
             getServer().addRecipe(ScrollOfWarp.getRecipe());
 			waypointDB = new WaypointDB(Config.databaseBackend);

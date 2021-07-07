@@ -27,7 +27,7 @@ public class SimpleDatabase {
 
     public SimpleDatabase(Backend backend, String filename) {
         this.BACKEND = backend;
-        this.DB_FILE_PATH = BASE_PATH + "/" + filename;
+        this.DB_FILE_PATH = BASE_PATH + "/" + backend.toString() + "/" + filename;
         try {
             switch (BACKEND) {
                 case SQLITE:
