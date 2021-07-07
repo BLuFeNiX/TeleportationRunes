@@ -1,8 +1,15 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
+import net.blufenix.common.SimpleDatabase;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Arrays;
+
+import static net.blufenix.common.SimpleDatabase.Backend.HSQLDB;
+import static net.blufenix.common.SimpleDatabase.Backend.SQLITE;
 
 /**
  * Created by blufenix on 7/31/15.
@@ -13,7 +20,7 @@ public class Config {
     public static boolean debug;
     public static String costFormula;
     public static boolean enableRotation;
-    public static String databaseBackend;
+    public static SimpleDatabase.Backend databaseBackend;
 
     public static Blueprint teleporterBlueprint;
     public static Blueprint waypointBlueprint;
@@ -32,7 +39,7 @@ public class Config {
         debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
-        databaseBackend = config.getString("TeleportationRunes.databaseBackend");
+        databaseBackend = detectDatabaseBackend(config);
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
@@ -50,4 +57,26 @@ public class Config {
             TeleportationRunes.getInstance().getPluginLoader().disablePlugin(TeleportationRunes.getInstance());
         }
     }
+
+    private static SimpleDatabase.Backend detectDatabaseBackend(FileConfiguration config) {
+        String backendString = config.getString("TeleportationRunes.databaseBackend");
+        SimpleDatabase.Backend backend;
+        // use the configured backend
+        // else use HSQLDB for FreeBSD and SQLite for everything else
+        if (backendString != null) {
+            try {
+                backend = SimpleDatabase.Backend.valueOf(backendString);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("bad value for databaseBackend in config.yml: "+backendString
+                        +" (expected one of: "+ Arrays.toString(SimpleDatabase.Backend.values()));
+            }
+        } else if ("FreeBSD".equals(System.getProperty("os.name"))) {
+            backend = HSQLDB;
+        } else {
+            backend = SQLITE;
+        }
+        Log.d("Using %s backend for database.", backend);
+        return backend;
+    }
+
 }
