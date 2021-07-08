@@ -3,6 +3,11 @@ TeleportationRunes:
   costFormula: (distance / 25)
   enableRotation: false
   debug: false
+
+  # whether or not Book of Ender should be consumed on successful use
+  # will not consume if waypoint was already activated, or could not be activated
+  consumeBook: false
+
   # database backend will default to SQLITE, except for FreeBSD which uses HSQLDB
   # or, you can specify a value here to force one or the other.
   #databaseBackend: SQLITE

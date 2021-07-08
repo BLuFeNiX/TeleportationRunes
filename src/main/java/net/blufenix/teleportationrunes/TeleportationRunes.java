@@ -154,11 +154,17 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 					getWaypointDB().removeWaypointByLocation(waypoint.loc);
 					getWaypointDB().addWaypoint(waypoint);
 					player.sendMessage(StringResources.WAYPOINT_CHANGED);
+					if (Config.consumeBook) {
+						player.getInventory().getItemInMainHand().setAmount(0);
+					}
 					break;
 				case Waypoint.NOT_EXISTS:
 					Log.d("clicked waypoint does not already exist in DB; adding now.");
 					waypointDB.addWaypoint(waypoint);
 					player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
+					if (Config.consumeBook) {
+						player.getInventory().getItemInMainHand().setAmount(0);
+					}
 					break;
 			}
 		} else if (!DebugMirage.handleMirage(player, blockLocation)) {
