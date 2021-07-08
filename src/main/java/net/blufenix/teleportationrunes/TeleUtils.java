@@ -193,7 +193,7 @@ public class TeleUtils {
         }
 
         loc.add(Vectors.UP)
-           .add(Vectors.UP)
+           .add(Vectors.UP_A_LITTLE)
            .add(Vectors.CENTER);
 
         return loc;
