@@ -175,9 +175,14 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 
 	private void handleScrollOfWarpAction(Player player, Location blockLocation) {
 		final ItemStack scrollStack = player.getInventory().getItemInMainHand();
+		Signature sig = Signature.fromLore(scrollStack.getItemMeta().getLore());
 		Waypoint waypoint = Waypoint.fromLocation(blockLocation);
 
 		if (waypoint != null) {
+			if (!Config.allowReattune && sig != null) {
+				player.sendMessage(ChatColor.RED+"Cannot re-attune scroll!");
+				return;
+			}
 			if (waypoint.status == Waypoint.EXISTS_VERIFIED) {
 				Log.d("waypoint valid! trying to attune scroll");
 				ItemMeta meta = scrollStack.getItemMeta();
@@ -193,7 +198,6 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				player.sendTitle("", "This waypoint has not been activated...");
 			}
 		} else { // use scroll
-			Signature sig = Signature.fromLore(scrollStack.getItemMeta().getLore());
 			if (sig != null) {
 				Log.d("starting teleport task...");
 				new TeleportTask(player, sig, true, new TeleportTask.Callback() {

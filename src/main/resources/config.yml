@@ -11,6 +11,9 @@ TeleportationRunes:
   # how many scrolls to craft when creating a scroll of warp
   numScrollsCrafted: 4
 
+  # allow already-attuned scrolls to be re-attuned
+  allowReattune: true
+
   # database backend will default to SQLITE, except for FreeBSD which uses HSQLDB
   # or, you can specify a value here to force one or the other.
   #databaseBackend: SQLITE

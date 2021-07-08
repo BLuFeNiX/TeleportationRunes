@@ -26,6 +26,7 @@ public class Config {
     public static Blueprint waypointBlueprint;
     public static boolean consumeBook;
     public static int numScrollsCrafted;
+    public static boolean allowReattune;
 
     private static JavaPlugin plugin;
 
@@ -50,6 +51,7 @@ public class Config {
         }
         consumeBook = config.getBoolean("TeleportationRunes.consumeBook", false);
         numScrollsCrafted = config.getInt("TeleportationRunes.numScrollsCrafted", 4);
+        allowReattune = config.getBoolean("TeleportationRunes.allowReattune", true);
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
