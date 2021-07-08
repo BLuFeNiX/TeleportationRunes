@@ -9,3 +9,4 @@ commands:
              TeleportationRunes command usage:
                  /<command> reload
                  /<command> convertdb
+                 /<command> mirage <teleporter|waypoint>

@@ -114,3 +114,6 @@ You may change the materials used, and the shape of the structure itself. Your n
           z: 1.0
 
 ```
+
+##### Testing your blueprint
+In order to see what your blueprint looks like in game, you can use `/tr mirage teleporter` or `/tr mirage waypoint` to display one of them in front of you. This will not actually change blocks in the world, but will temporarily render them in your client. Other players will not be able to see them. When rendered, a blueprint will use beacon blocks as placeholders for the 4 signature blocks.

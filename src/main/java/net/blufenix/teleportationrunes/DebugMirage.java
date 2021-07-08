@@ -18,6 +18,7 @@ public class DebugMirage {
     public static void queueMirage(CommandSender sender, String mirageType) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Must be a player to show mirage!");
+            return;
         } else if ("teleporter".startsWith(mirageType)) {
             playersPendingTeleporterMirage.add((Player) sender);
             sender.sendMessage(ChatColor.GOLD + "Ready to show teleporter!");
@@ -25,6 +26,7 @@ public class DebugMirage {
             playersPendingWaypointMirage.add((Player) sender);
             sender.sendMessage(ChatColor.GOLD + "Ready to show waypoint!");
         }
+        sender.sendMessage(ChatColor.GOLD + "Using a Book of Ender, right click any block to show the blueprint.");
     }
 
     public static boolean handleMirage(Player player, Location loc) {

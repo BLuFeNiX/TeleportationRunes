@@ -233,14 +233,14 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 								"in plugins/TeleportationRunes/%s/, and must be moved or deleted manually.",
 								ChatColor.RED, targetBackend));
 					}
-				} else if (Config.debug) {
-				    if ("mirage".startsWith(args[0])) {
-				    	if (args.length == 2) {
-							DebugMirage.queueMirage(sender, args[1]);
-						} else {
-				    		sender.sendMessage(ChatColor.RED+"usage: /tr mirage <teleporter|waypoint>");
-						}
-                    }
+				} else if ("mirage".startsWith(args[0])) {
+					if (args.length == 2) {
+						DebugMirage.queueMirage(sender, args[1]);
+					} else {
+						sender.sendMessage(ChatColor.RED+"usage: /tr mirage <teleporter|waypoint>");
+					}
+				} else {
+					sender.sendMessage(ChatColor.RED+"invalid command");
 				}
 
 				return true;
