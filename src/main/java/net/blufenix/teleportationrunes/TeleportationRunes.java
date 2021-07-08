@@ -19,7 +19,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.Arrays;
+import static net.blufenix.common.SimpleDatabase.Backend.HSQLDB;
+import static net.blufenix.common.SimpleDatabase.Backend.SQLITE;
 
 public class TeleportationRunes extends JavaPlugin implements Listener {
 
@@ -51,6 +52,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
             getServer().addRecipe(BookOfEnder.getRecipe());
             getServer().addRecipe(ScrollOfWarp.getRecipe());
 			waypointDB = new WaypointDB(Config.databaseBackend);
+			waypointDB.createTables();
 			// register event so we can be executed when a player clicks a block
 			this.getServer().getPluginManager().registerEvents(this, this);
             teleportCheckerTask = TeleportChecker.start();
@@ -66,7 +68,9 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 	public void onDisable() {
 		super.onDisable();
         if (teleportCheckerTask != null) teleportCheckerTask.cancel();
-        waypointDB.closeConnections();
+        if (waypointDB != null) {
+			waypointDB.closeConnections();
+		}
 		this.getLogger().info(StringResources.UNLOADED);
 	}
 
@@ -214,12 +218,27 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				} else if ("reload".startsWith(args[0])) {
                     Config.reload();
 					sender.sendMessage(ChatColor.GOLD+"Teleportation Runes config reloaded!");
+				} else if ("convertdb".startsWith(args[0])) {
+                	SimpleDatabase.Backend backend = waypointDB.getBackend();
+					SimpleDatabase.Backend targetBackend = backend == SQLITE ? HSQLDB : SQLITE;
+					sender.sendMessage(String.format("%sConverting database from %s to %s.\n" +
+							"This will NOT delete any existing data, and will NOT activate the new database.\n" +
+							"Once conversion is complete, you must set\n    %sdatabaseBackend: %s%s\nin config.yml. " +
+							"The old database will remain in plugins/TeleportationRunes/%s/ unless you delete it manually.",
+							ChatColor.RED, backend, targetBackend, ChatColor.GOLD, targetBackend, ChatColor.RED, backend));
+					if (waypointDB.attemptDatabaseConversion()) {
+						sender.sendMessage(ChatColor.RED+"Conversion complete!");
+					} else {
+						sender.sendMessage(String.format("%sConversion FAILED!\nA database already exists " +
+								"in plugins/TeleportationRunes/%s/, and must be moved or deleted manually.",
+								ChatColor.RED, targetBackend));
+					}
 				} else if (Config.debug) {
 				    if ("mirage".startsWith(args[0])) {
 				    	if (args.length == 2) {
 							DebugMirage.queueMirage(sender, args[1]);
 						} else {
-				    		sender.sendMessage(ChatColor.RED+"usage: /mirage <teleporter|waypoint>");
+				    		sender.sendMessage(ChatColor.RED+"usage: /tr mirage <teleporter|waypoint>");
 						}
                     }
 				}

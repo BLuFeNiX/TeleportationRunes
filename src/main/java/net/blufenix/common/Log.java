@@ -20,7 +20,7 @@ public class Log {
     public static void e(String format, Object... args) {
         if (Config.debug) {
             int lastIdx = args.length-1;
-            if (args[lastIdx] instanceof Throwable) {
+            if (args.length > 0 && args[lastIdx] instanceof Throwable) {
                 Object[] tmpArgs = new Object[lastIdx];
                 System.arraycopy(args, 0, tmpArgs, 0, lastIdx);
                 LazyHolder.logger.warning(String.format(format, tmpArgs));

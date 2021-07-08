@@ -7,6 +7,11 @@ import org.bukkit.World;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static net.blufenix.common.SimpleDatabase.Backend.HSQLDB;
+import static net.blufenix.common.SimpleDatabase.Backend.SQLITE;
 
 /**
  * For now, all query syntax must be compatible with both SQLite and HSQLDB in PostgreSQL mode!
@@ -17,15 +22,14 @@ public class WaypointDB extends SimpleDatabase {
     private static final String WAYPOINT_TABLE = "waypoints_v2";
 
     public WaypointDB(Backend backend) {
-        this(backend, DEFAULT_FILENAME);
+        super(backend, DEFAULT_FILENAME, 0);
     }
 
     public WaypointDB(Backend backend, String filename) {
-        super(backend, filename);
-        createTables();
+        super(backend, filename, 0);
     }
 
-    private void createTables() {
+    public void createTables() {
         try {
             execute("CREATE TABLE IF NOT EXISTS " + WAYPOINT_TABLE +
                     " (world TEXT NOT NULL, " +
@@ -147,4 +151,56 @@ public class WaypointDB extends SimpleDatabase {
         return null;
     }
 
+    public List<Waypoint> getAllWaypoints() {
+        String sql = String.format("SELECT world, x, y, z, north, south, east, west FROM %s", WAYPOINT_TABLE);
+
+        try {
+            final List<Waypoint> allWaypoints = new ArrayList<>();
+            query(sql, new QueryHandler<Void>() {
+                @Override
+                protected Void handle(ResultSet rs) throws SQLException {
+                    if (rs.next()) {
+                        String worldName = rs.getString(1);
+                        int x = rs.getInt(2);
+                        int y = rs.getInt(3);
+                        int z = rs.getInt(4);
+                        String n = rs.getString(5);
+                        String s = rs.getString(6);
+                        String e = rs.getString(7);
+                        String w = rs.getString(8);
+
+                        World world = TeleportationRunes.getInstance().getServer().getWorld(worldName);
+                        Location loc = new Location(world, x, y, z);
+
+                        Waypoint waypoint = new Waypoint(loc, new Signature(n, s, e, w));
+                        allWaypoints.add(waypoint);
+                    }
+                    return null;
+                }
+            });
+            return allWaypoints;
+        } catch (SQLException e) {
+            Log.e("query error", e);
+        }
+
+        return null;
+    }
+
+    /**
+     * If we are an SQLiteDB, create an HSQLDB; otherwise do the opposite.
+     */
+    public boolean attemptDatabaseConversion() {
+        SimpleDatabase.Backend targetBackend = getBackend() == SQLITE ? HSQLDB : SQLITE;
+        WaypointDB targetDB = new WaypointDB(targetBackend);
+        if (targetDB.exists()) {
+            // don't try to overwrite existing DB
+            return false;
+        }
+        targetDB.createTables();
+        for (Waypoint waypoint : getAllWaypoints()) {
+            targetDB.addWaypoint(waypoint);
+        }
+        targetDB.closeConnections();
+        return true;
+    }
 }

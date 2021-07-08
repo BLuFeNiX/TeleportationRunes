@@ -40,6 +40,12 @@ public class Config {
         costFormula = config.getString("TeleportationRunes.costFormula");
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
         databaseBackend = detectDatabaseBackend(config);
+        if (databaseBackend == null) {
+            Log.e("bad value for databaseBackend in config.yml, expected one of: %s",
+                    Arrays.toString(SimpleDatabase.Backend.values()));
+            Log.e("plugin disabled!");
+            enabled = false;
+        }
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
@@ -67,8 +73,7 @@ public class Config {
             try {
                 backend = SimpleDatabase.Backend.valueOf(backendString);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("bad value for databaseBackend in config.yml: "+backendString
-                        +" (expected one of: "+ Arrays.toString(SimpleDatabase.Backend.values()));
+                return null;
             }
         } else if ("FreeBSD".equals(System.getProperty("os.name"))) {
             backend = HSQLDB;

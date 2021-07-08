@@ -2,6 +2,7 @@ package net.blufenix.common;
 
 import net.blufenix.teleportationrunes.TeleportationRunes;
 
+import java.io.File;
 import java.sql.*;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,9 +13,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class SimpleDatabase {
 
     private static final String BASE_PATH = TeleportationRunes.getInstance().getDataFolder().getAbsolutePath();
-    private static final int NUM_INITIAL_CONNECTIONS = 0;
 
-    private final Queue<Connection> connectionPool = new ConcurrentLinkedQueue<Connection>();
+    private final Queue<Connection> connectionPool = new ConcurrentLinkedQueue<>();
 
     private final Backend BACKEND;
     private final String DB_FILE_PATH;
@@ -25,9 +25,15 @@ public class SimpleDatabase {
         HSQLDB
     }
 
-    public SimpleDatabase(Backend backend, String filename) {
+    /***
+     * This constructor should not perform any database I/O when initialConnections is 0. THis will avoid creating
+     * a file when one did not exist before. We do, however, create the directory it will go in (for now).
+     */
+    public SimpleDatabase(Backend backend, String filename, int initialConnections) {
         this.BACKEND = backend;
         this.DB_FILE_PATH = BASE_PATH + "/" + backend.toString() + "/" + filename;
+        // make sure our directory exists
+        new File(DB_FILE_PATH).getParentFile().mkdirs();
         try {
             switch (BACKEND) {
                 case SQLITE:
@@ -43,14 +49,26 @@ public class SimpleDatabase {
                 default:
                     throw new IllegalArgumentException("You must specify a valid DB backend!");
             }
-            openConnections();
+            openConnections(initialConnections);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("can't load JDBC driver for "+BACKEND, e);
         }
     }
 
-    private void openConnections() {
-        for (int i = 0; i < NUM_INITIAL_CONNECTIONS; i++) {
+    protected boolean exists() {
+        switch (BACKEND) {
+            case SQLITE: return new File(DB_FILE_PATH).exists();
+            case HSQLDB: return new File(DB_FILE_PATH+".properties").exists();
+            default: throw new IllegalStateException("invalid backend for DB: "+BACKEND);
+        }
+    }
+
+    public Backend getBackend() {
+        return BACKEND;
+    }
+
+    private void openConnections(int numConnections) {
+        for (int i = 0; i < numConnections; i++) {
             connectionPool.add(getNewConnection());
         }
     }
@@ -62,6 +80,7 @@ public class SimpleDatabase {
                     con.close();
                 }
             }
+            connectionPool.clear();
         } catch (SQLException e) {
             Log.e("error closing connections", e);
         }
