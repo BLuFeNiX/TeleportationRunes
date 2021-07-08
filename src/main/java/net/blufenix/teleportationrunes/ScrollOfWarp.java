@@ -37,7 +37,7 @@ public class ScrollOfWarp extends ItemStack {
     }
 
     private ScrollOfWarp() {
-        super(Material.PAPER, 4);
+        super(Material.PAPER, Config.numScrollsCrafted);
         ItemMeta meta = getItemMeta();
         meta.addEnchant(Enchantment.BINDING_CURSE, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);

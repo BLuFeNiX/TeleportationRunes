@@ -8,6 +8,9 @@ TeleportationRunes:
   # will not consume if waypoint was already activated, or could not be activated
   consumeBook: false
 
+  # how many scrolls to craft when creating a scroll of warp
+  numScrollsCrafted: 4
+
   # database backend will default to SQLITE, except for FreeBSD which uses HSQLDB
   # or, you can specify a value here to force one or the other.
   #databaseBackend: SQLITE
