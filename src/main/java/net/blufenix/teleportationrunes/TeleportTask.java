@@ -61,12 +61,6 @@ public class TeleportTask extends BukkitRunnable {
         } else {
             throw new RuntimeException("lateInit() failed. bad params?");
         }
-
-        try {
-            countdownTicks = TeleUtils.calculateExpr(sourceLoc, destWaypoint.loc, Config.teleportDelayFormula);
-        } catch (Exception e) {
-            Log.e("error in startTeleportationTask!", e);
-        }
     }
 
     public void execute() {
@@ -90,6 +84,9 @@ public class TeleportTask extends BukkitRunnable {
     private boolean startTeleportationTask() {
         try {
             if (sourceLoc == null || destWaypoint == null) return false;
+
+            // calculate time before teleport
+            countdownTicks = TeleUtils.calculateExpr(sourceLoc, destWaypoint.loc, Config.teleportDelayFormula);
 
             // show the player the cost
             int fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
