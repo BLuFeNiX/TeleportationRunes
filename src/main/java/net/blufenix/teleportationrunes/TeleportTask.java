@@ -17,7 +17,7 @@ public class TeleportTask extends BukkitRunnable {
 
     // modify these
     private int countdownTicks;
-    private static final int UPDATE_INTERVAL_TICKS = 2;
+    private final int updateIntervalTicks = Config.animationDutyCycle;
 
     private final Callback callback;
 
@@ -114,7 +114,7 @@ public class TeleportTask extends BukkitRunnable {
                     animation.setLocation(animLoc);
                 }
 
-                runTaskTimer(TeleportationRunes.getInstance(), 0, UPDATE_INTERVAL_TICKS);
+                runTaskTimer(TeleportationRunes.getInstance(), 0, updateIntervalTicks);
                 return true;
             }
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class TeleportTask extends BukkitRunnable {
         // we haven't actually ticked yet, but if we pass 0 into our animation ticks
         // it will animate a single frame regardless of the interval or fake tick settings
         // TODO is there a cleaner way to fix this and remove the time shift?
-        elapsedTicks += UPDATE_INTERVAL_TICKS;
+        elapsedTicks += updateIntervalTicks;
 
         if (!canLeaveArea && !playerStillAtTeleporter()) {
             player.sendMessage("You left the teleporter area. Cancelling...");

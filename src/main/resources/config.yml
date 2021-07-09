@@ -54,9 +54,15 @@ TeleportationRunes:
     particles: 10
     rotations: 1.5
     cycles: 1
-    # animating all frames is more CPU intensive, but may look better depending on the other settings here
-    # this also has a side-effect of generating many more particles, since they are per-frame
-    animateAllFrames: false
+    # the animation duty cycle controls how many ticks must elapse before more particles are drawn
+    # 1 is the lowest value, and will give the smoothest animation
+    # increase this value if you experience lag
+    dutyCycle: 1
+    # to compensate for a dutyCycle greater than 1, you can use this setting to animate all the frames that would
+    # have been skipped. Rather than 1 frame per tick, you will animate a number of frames equal to the duty cycle,
+    # but all at once. This value is effectively ignored when dutyCycle is 1.
+    # disable this if bumping up the duty cycle doesn't fix lag
+    animateAllFrames: true
 
   blueprint:
     materials:

@@ -37,6 +37,7 @@ public class Config {
     public static String teleportDelayFormula;
     public static SwirlAnimation particleAnimation;
     public static boolean particleAnimationEnabled;
+    public static int animationDutyCycle;
 
     private static JavaPlugin plugin;
 
@@ -67,6 +68,12 @@ public class Config {
         teleportDelayFormula = config.getString("TeleportationRunes.teleportDelayFormula", "60");
         particleAnimation = createAnimation(config);
         particleAnimationEnabled = config.getBoolean("TeleportationRunes.particleAnimation.enabled", true);
+        if (particleAnimationEnabled) {
+            animationDutyCycle = config.getInt("TeleportationRunes.particleAnimation.dutyCycle", 1);
+        } else {
+            // no sense in wasting CPU cycles if we are not animating, so just make this 10 ticks
+            animationDutyCycle = 10;
+        }
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
