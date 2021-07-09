@@ -108,7 +108,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		// even if they are holding a key item, do nothing if they are interacting with certain blocks
 		// ex: crafting table, hopper, chest, etc.
 		Block blockClicked = event.getClickedBlock();
-		if (BlockUtil.isPlayerInteractableWithoutSpecialItem(blockClicked)) {
+		if (blockClicked != null && blockClicked.getType().isInteractable()) {
 			Log.d("NOT handling right-click event (player interacting with block overrides us)");
 			return;
 		}

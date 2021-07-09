@@ -36,6 +36,8 @@ TeleportationRunes:
       E: SIGNATURE_BLOCK_3
       W: SIGNATURE_BLOCK_4
 
+      # These are arbitrary. Keys can be any letter or string (that isn't used above),
+      # and each material value must be a valid material name.
       R: REDSTONE_BLOCK
       L: LAPIS_BLOCK
       D: DIAMOND_BLOCK
