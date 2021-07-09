@@ -10,8 +10,12 @@ import org.bukkit.util.Vector;
 public class SwirlAnimation {
 
     private int duration = 20; // ticks
+    private int cycles = 1; // how many times the animation repeats
+    private int cycleDuration; // ticks
+    private int frames = 600; // enough frames for 30 seconds of smooth animation
     private int segments;
     private double radius;
+    private double rotations;
     private boolean useFakeTicks;
     private Location location;
     private World world;
@@ -20,7 +24,7 @@ public class SwirlAnimation {
     private boolean repeat;
     private Entity trackedEntity = null;
 
-    private double degreesPerTick;
+    private double degreesPerFrame;
     private int lastElapsedTicks = -1;
 
     private int totalRotationsDegrees = 360;
@@ -39,7 +43,8 @@ public class SwirlAnimation {
                 .setNumParticles(10)
                 .enableFakeTicks(true)
                 .enableRepeat(true)
-                .setRotations(2);
+                .setRotations(2)
+                .setCycles(1);
 
         if (defaultCompiledVectors != null) {
             anim.setCompiledVectors(defaultCompiledVectors);
@@ -50,9 +55,29 @@ public class SwirlAnimation {
         return anim;
     }
 
+    public SwirlAnimation clone() {
+        return new SwirlAnimation()
+                .setParticle(particles)
+                .setRadius(radius)
+                .setSegments(segments)
+                .setNumParticles(numParticles)
+                .enableFakeTicks(useFakeTicks)
+                .enableRepeat(repeat)
+                .setRotations(rotations)
+                .setCycles(cycles)
+                .setCompiledVectors(getCompiledVectors())
+                .setDuration(duration);
+    }
+
     public SwirlAnimation setDuration(int duration) {
         this.duration = duration;
-        this.degreesPerTick = (double) totalRotationsDegrees/duration;
+        this.cycleDuration = duration/cycles;
+        return this;
+    }
+
+    public SwirlAnimation setCycles(int cycles) {
+        this.cycles = cycles;
+        this.cycleDuration = duration/cycles;
         return this;
     }
 
@@ -98,8 +123,9 @@ public class SwirlAnimation {
     }
 
     public SwirlAnimation setRotations(double rotations) {
+        this.rotations = rotations;
         this.totalRotationsDegrees = (int) (360 * rotations);
-        this.degreesPerTick = (double) totalRotationsDegrees/duration;
+        this.degreesPerFrame = (double) totalRotationsDegrees/frames;
         return this;
     }
 
@@ -109,10 +135,10 @@ public class SwirlAnimation {
     }
 
     public void update(int elapsedTicks) {
-        if (repeat && elapsedTicks > duration) {
-            elapsedTicks %= duration;
+        if (repeat && elapsedTicks > cycleDuration) {
+            elapsedTicks %= cycleDuration;
             lastElapsedTicks = -1;
-        } else if (elapsedTicks > duration) {
+        } else if (elapsedTicks > cycleDuration) {
             Log.e("animation finished. not ticking!");
             return;
         }
@@ -129,28 +155,33 @@ public class SwirlAnimation {
     }
 
     private void onTick(int tick) {
-        for (int segment = 0; segment < compiledVectors[tick].length; segment++) {
+        int frameIdx = (frames / cycleDuration) * tick;
+        for (int segment = 0; segment < compiledVectors[frameIdx].length; segment++) {
             for (Particle p : particles) {
-                world.spawnParticle(p, getBaseAnimationLocation().add(compiledVectors[tick][segment]), numParticles, null);
+                world.spawnParticle(p, getBaseAnimationLocation().add(compiledVectors[frameIdx][segment]), numParticles, null);
             }
         }
     }
 
+    public SwirlAnimation compile() {
+        return this.setCompiledVectors(compile(this));
+    }
+
     public static Vector[][] compile(SwirlAnimation anim) {
-        Vector[][] compiledVectors = new Vector[anim.duration][];
-        for (int tick = 0; tick < anim.duration; tick++) {
-            compiledVectors[tick] = compileTick(anim, tick);
+        Vector[][] compiledVectors = new Vector[anim.frames][];
+        for (int frame = 0; frame < anim.frames; frame++) {
+            compiledVectors[frame] = compileFrame(anim, frame);
         }
         anim.compiledVectors = compiledVectors;
         return compiledVectors;
     }
 
-    private static Vector[] compileTick(SwirlAnimation anim, int tick) {
+    private static Vector[] compileFrame(SwirlAnimation anim, int frame) {
         Vector[] vectors = new Vector[anim.segments];
         for (int segment = 0; segment < anim.segments; segment++) {
             double segmentOffset = ((double)360/anim.segments) * segment;
-            double radians = Math.toRadians(((double) tick * anim.degreesPerTick) + segmentOffset);
-            double r = anim.radius * (1 - ((double) tick / anim.duration));
+            double radians = Math.toRadians(((double) frame * anim.degreesPerFrame) + segmentOffset);
+            double r = anim.radius * (1 - ((double) frame / anim.frames));
             double xPos = r * Math.cos(radians);
             double zPos = r * Math.sin(radians);
             vectors[segment] = new Vector(xPos, 0, zPos);
@@ -158,7 +189,12 @@ public class SwirlAnimation {
         return vectors;
     }
 
-    public void setCompiledVectors(Vector[][] compiledVectors) {
+    public SwirlAnimation setCompiledVectors(Vector[][] compiledVectors) {
         this.compiledVectors = compiledVectors;
+        return this;
+    }
+
+    public Vector[][] getCompiledVectors() {
+        return compiledVectors;
     }
 }
