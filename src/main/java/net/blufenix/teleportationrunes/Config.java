@@ -2,11 +2,13 @@ package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
 import net.blufenix.common.SimpleDatabase;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static net.blufenix.common.SimpleDatabase.Backend.HSQLDB;
 import static net.blufenix.common.SimpleDatabase.Backend.SQLITE;
@@ -27,6 +29,8 @@ public class Config {
     public static boolean consumeBook;
     public static int numScrollsCrafted;
     public static boolean allowReattune;
+    public static List<String> bookOfEnderRecipeList;
+    public static List<String> scrollOfWarpRecipeList;
 
     private static JavaPlugin plugin;
 
@@ -60,6 +64,18 @@ public class Config {
 
         teleporterBlueprint = new Blueprint(teleporterBlueprintConfig, blueprintMaterialsConfig);
         waypointBlueprint = new Blueprint(waypointBlueprintConfig, blueprintMaterialsConfig);
+
+        bookOfEnderRecipeList = config.getStringList("TeleportationRunes.bookOfEnder.recipe");
+        if (bookOfEnderRecipeList.size() == 0) {
+            bookOfEnderRecipeList.add(Material.BOOK.name());
+            bookOfEnderRecipeList.add(Material.ENDER_PEARL.name());
+        }
+
+        scrollOfWarpRecipeList = config.getStringList("TeleportationRunes.scrollOfWarp.recipe");
+        if (scrollOfWarpRecipeList.size() == 0) {
+            scrollOfWarpRecipeList.add(Material.PAPER.name());
+            scrollOfWarpRecipeList.add(Material.ENDER_PEARL.name());
+        }
     }
 
     public static void reload() {

@@ -30,8 +30,9 @@ public class ScrollOfWarp extends ItemStack {
                 new NamespacedKey(TeleportationRunes.getInstance(), "scroll_of_warp"),
                 ScrollOfWarp.getInstance());
 
-        recipe.addIngredient(Material.PAPER);
-        recipe.addIngredient(Material.ENDER_PEARL);
+        for (String matName: Config.scrollOfWarpRecipeList) {
+            recipe.addIngredient(Material.matchMaterial(matName));
+        }
 
         return recipe;
     }

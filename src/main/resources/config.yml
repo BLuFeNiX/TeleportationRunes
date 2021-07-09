@@ -19,6 +19,18 @@ TeleportationRunes:
   #databaseBackend: SQLITE
   #databaseBackend: HSQLDB
 
+  # shapeless recipe for Book of Ender
+  bookOfEnder:
+    recipe:
+      - BOOK
+      - ENDER_PEARL
+
+  # shapeless recipe for Scroll of Warp
+  scrollOfWarp:
+    recipe:
+      - PAPER
+      - ENDER_PEARL
+
   blueprint:
     materials:
       # you can configure these in any way you want, but some characters (like a question mark, '?') will cause issues

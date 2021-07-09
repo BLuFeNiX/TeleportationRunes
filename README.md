@@ -68,6 +68,10 @@ Enabling this will allow for the creation of abnormally shapped structures, with
   enableRotation: false
 ```
 
+#### Item Recipe Customization
+
+The **Book of Ender** and **Scroll of Warp** recipes may be customized, as well as some mechanics of their use (for example, if the book is consumed when used). See [config.yml](https://github.com/BLuFeNiX/TeleportationRunes/blob/master/src/main/resources/config.yml) for examples.
+
 #### Blueprint (shape)
 The configuration below describes a 1-block high, 3x3 square for both the teleporter and waypoint. This matches the default configuration.
 You may change the materials used, and the shape of the structure itself. Your new design *must* include the use of the four different signature blocks.

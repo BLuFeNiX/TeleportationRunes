@@ -28,8 +28,9 @@ public class BookOfEnder extends ItemStack {
                 new NamespacedKey(TeleportationRunes.getInstance(), "book_of_ender"),
                 BookOfEnder.getInstance());
 
-        recipe.addIngredient(Material.BOOK);
-        recipe.addIngredient(Material.ENDER_PEARL);
+        for (String matName: Config.bookOfEnderRecipeList) {
+            recipe.addIngredient(Material.matchMaterial(matName));
+        }
 
         return recipe;
     }
