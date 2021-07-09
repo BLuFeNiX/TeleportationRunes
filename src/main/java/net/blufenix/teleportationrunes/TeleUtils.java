@@ -153,7 +153,14 @@ public class TeleUtils {
                     player.spawnParticle(Particle.HEART, adjustedLoc, 1);
                 }
 
-                player.getWorld().strikeLightningEffect(adjustedLoc);
+                if (Config.enableLightningEffect) {
+                    player.getWorld().strikeLightningEffect(adjustedLoc);
+                }
+
+                if (Config.enableEnderTeleportEffect) {
+                    player.playEffect(EntityEffect.TELEPORT_ENDER);
+                    player.playSound(adjustedLoc, "entity.enderman.teleport", 1f /*volume*/, 1.0f /*pitch*/);
+                }
 
                 // subtract EXP
                 player.giveExp(-fee);

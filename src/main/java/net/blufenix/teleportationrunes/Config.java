@@ -31,6 +31,8 @@ public class Config {
     public static boolean allowReattune;
     public static List<String> bookOfEnderRecipeList;
     public static List<String> scrollOfWarpRecipeList;
+    public static boolean enableLightningEffect;
+    public static boolean enableEnderTeleportEffect;
 
     private static JavaPlugin plugin;
 
@@ -46,6 +48,8 @@ public class Config {
         debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
+        enableLightningEffect = config.getBoolean("TeleportationRunes.enableLightningEffect", false);
+        enableEnderTeleportEffect = config.getBoolean("TeleportationRunes.enableEnderTeleportEffect", true);
         databaseBackend = detectDatabaseBackend(config);
         if (databaseBackend == null) {
             Log.e("bad value for databaseBackend in config.yml, expected one of: %s",

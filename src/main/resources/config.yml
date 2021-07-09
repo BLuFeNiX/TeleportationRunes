@@ -4,6 +4,12 @@ TeleportationRunes:
   enableRotation: false
   debug: false
 
+  # whether or not to strike lightning (non-damaging) whenever a player teleports
+  enableLightningEffect: false
+
+  # whether or not to use enderman-like teleport effects
+  enableEnderTeleportEffect: true
+
   # whether or not Book of Ender should be consumed on successful use
   # will not consume if waypoint was already activated, or could not be activated
   consumeBook: false
