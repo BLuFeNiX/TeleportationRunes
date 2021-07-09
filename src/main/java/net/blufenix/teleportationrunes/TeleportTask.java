@@ -2,7 +2,6 @@ package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
 import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -17,12 +16,9 @@ public class TeleportTask extends BukkitRunnable {
     private static Set<Player> playersCurrentlyTeleporting = new HashSet<>();
 
     // modify these
-    private static final int COUNTDOWN_SECONDS = 3;
+    private int countdownTicks;
     private static final int UPDATE_INTERVAL_TICKS = 2;
 
-    // auto-calculated
-    // todo de-dupe this calc
-    private static final int COUNTDOWN_TICKS = COUNTDOWN_SECONDS * 20; // assumes 20 ticks per second standard server
     private final Callback callback;
 
     private int elapsedTicks = 0;
@@ -65,6 +61,12 @@ public class TeleportTask extends BukkitRunnable {
         } else {
             throw new RuntimeException("lateInit() failed. bad params?");
         }
+
+        try {
+            countdownTicks = TeleUtils.calculateExpr(sourceLoc, destWaypoint.loc, Config.teleportDelayFormula);
+        } catch (Exception e) {
+            Log.e("error in startTeleportationTask!", e);
+        }
     }
 
     public void execute() {
@@ -90,7 +92,7 @@ public class TeleportTask extends BukkitRunnable {
             if (sourceLoc == null || destWaypoint == null) return false;
 
             // show the player the cost
-            int fee = TeleUtils.calculateFee(destWaypoint.loc, sourceLoc);
+            int fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
             int currentExp = ExpUtil.getTotalExperience(player);
             String msg = String.format("%d XP / %d XP", fee, currentExp);
             //player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
@@ -100,7 +102,8 @@ public class TeleportTask extends BukkitRunnable {
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("[sneak to confirm]"));
             } else {
                 // start teleport animation and timer
-                animation = SwirlAnimation.getDefault();
+                animation = Config.particleAnimation.clone()
+                        .setDuration(countdownTicks);
                 if (canLeaveArea) {
                     animation.setLocation(player);
                 } else {
@@ -135,8 +138,10 @@ public class TeleportTask extends BukkitRunnable {
             return;
         }
 
-        if (elapsedTicks < COUNTDOWN_TICKS) {
-            animation.update(elapsedTicks);
+        if (elapsedTicks < countdownTicks) {
+            if (Config.particleAnimationEnabled) {
+                animation.update(elapsedTicks);
+            }
         } else {
             if (TeleUtils.attemptTeleport(player, sourceLoc, destWaypoint)) {
                 onSuccessOrFail(true);

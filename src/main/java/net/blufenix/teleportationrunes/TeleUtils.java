@@ -90,7 +90,7 @@ public class TeleUtils {
 
         try {
 
-            int fee = calculateFee(existingWaypoint.loc, teleporterLoc);
+            int fee = calculateExpr(existingWaypoint.loc, teleporterLoc, Config.costFormula);
             int currentExp = ExpUtil.getTotalExperience(player);
 
             if (currentExp >= fee) {
@@ -206,11 +206,11 @@ public class TeleUtils {
         return loc;
     }
 
-    public static int calculateFee(Location waypointLoc, Location teleporterLoc) throws UnparsableExpressionException, UnknownFunctionException {
+    public static int calculateExpr(Location waypointLoc, Location teleporterLoc, String formula) throws UnparsableExpressionException, UnknownFunctionException {
         // calculate teleport distance
         double distance = waypointLoc.distance(teleporterLoc);
 
-        Calculable calc = new ExpressionBuilder(Config.costFormula)
+        Calculable calc = new ExpressionBuilder(formula)
                 .withVariable("distance", distance)
                 .build();
 

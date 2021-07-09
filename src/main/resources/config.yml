@@ -10,6 +10,12 @@ TeleportationRunes:
   # whether or not to use enderman-like teleport effects
   enableEnderTeleportEffect: true
 
+  # delay of teleportation in ticks (20 ticks per second for a normal server)
+  # default value is 3 seconds, but you can also make it longer based on distance
+  # for example, a minimum of 1 second, plus 1 second for every 100 blocks:
+  #teleportDelayFormula: (1 + (distance / 100)) * 20
+  teleportDelayFormula: 60
+
   # whether or not Book of Ender should be consumed on successful use
   # will not consume if waypoint was already activated, or could not be activated
   consumeBook: false
@@ -36,6 +42,21 @@ TeleportationRunes:
     recipe:
       - PAPER
       - ENDER_PEARL
+
+  # animation settings when particles swirl around a teleporting player
+  # only radius and rotations are floating point values, all other numbers must be integers
+  # duration of animation is controlled by teleportDelayFormula, since the animation is intended to match
+  particleAnimation:
+    enabled: true
+    particleType: SPELL_WITCH
+    radius: 4.0
+    segments: 3
+    particles: 10
+    rotations: 1.5
+    cycles: 1
+    # animating all frames is more CPU intensive, but may look better depending on the other settings here
+    # this also has a side-effect of generating many more particles, since they are per-frame
+    animateAllFrames: false
 
   blueprint:
     materials:

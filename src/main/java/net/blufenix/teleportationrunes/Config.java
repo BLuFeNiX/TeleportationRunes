@@ -3,6 +3,7 @@ package net.blufenix.teleportationrunes;
 import net.blufenix.common.Log;
 import net.blufenix.common.SimpleDatabase;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -33,6 +34,9 @@ public class Config {
     public static List<String> scrollOfWarpRecipeList;
     public static boolean enableLightningEffect;
     public static boolean enableEnderTeleportEffect;
+    public static String teleportDelayFormula;
+    public static SwirlAnimation particleAnimation;
+    public static boolean particleAnimationEnabled;
 
     private static JavaPlugin plugin;
 
@@ -60,6 +64,9 @@ public class Config {
         consumeBook = config.getBoolean("TeleportationRunes.consumeBook", false);
         numScrollsCrafted = config.getInt("TeleportationRunes.numScrollsCrafted", 4);
         allowReattune = config.getBoolean("TeleportationRunes.allowReattune", true);
+        teleportDelayFormula = config.getString("TeleportationRunes.teleportDelayFormula", "60");
+        particleAnimation = createAnimation(config);
+        particleAnimationEnabled = config.getBoolean("TeleportationRunes.particleAnimation.enabled", true);
 
         // create blueprints
         ConfigurationSection blueprintMaterialsConfig = config.getConfigurationSection("TeleportationRunes.blueprint.materials");
@@ -79,6 +86,25 @@ public class Config {
         if (scrollOfWarpRecipeList.size() == 0) {
             scrollOfWarpRecipeList.add(Material.PAPER.name());
             scrollOfWarpRecipeList.add(Material.ENDER_PEARL.name());
+        }
+    }
+
+    private static SwirlAnimation createAnimation(FileConfiguration config) {
+        ConfigurationSection animConf = config.getConfigurationSection("TeleportationRunes.particleAnimation");
+        if (animConf !=  null) {
+            SwirlAnimation anim = new SwirlAnimation()
+                    .setParticle(Particle.valueOf(animConf.getString("particleType", "SPELL_WITCH")))
+                    .setRadius(animConf.getDouble("radius", 5))
+                    .setSegments(animConf.getInt("segments", 3))
+                    .setNumParticles(animConf.getInt("particles", 10))
+                    .enableFakeTicks(animConf.getBoolean("animateAllFrames", false))
+                    .enableRepeat(true)
+                    .setRotations(animConf.getDouble("rotations", 2))
+                    .setCycles(animConf.getInt("cycles", 1))
+                    .compile();
+            return anim;
+        } else {
+            return SwirlAnimation.getDefault();
         }
     }
 
