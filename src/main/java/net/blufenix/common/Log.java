@@ -18,17 +18,15 @@ public class Log {
     }
 
     public static void e(String format, Object... args) {
-        if (Config.debug) {
-            int lastIdx = args.length-1;
-            if (args.length > 0 && args[lastIdx] instanceof Throwable) {
-                Object[] tmpArgs = new Object[lastIdx];
-                System.arraycopy(args, 0, tmpArgs, 0, lastIdx);
-                LazyHolder.logger.warning(String.format(format, tmpArgs));
-                LazyHolder.logger.warning("ERROR: "+((Throwable)args[lastIdx]).getMessage());
-                ((Throwable)args[lastIdx]).printStackTrace();
-            } else {
-                LazyHolder.logger.warning(String.format(format, args));
-            }
+        int lastIdx = args.length-1;
+        if (args.length > 0 && args[lastIdx] instanceof Throwable) {
+            Object[] tmpArgs = new Object[lastIdx];
+            System.arraycopy(args, 0, tmpArgs, 0, lastIdx);
+            LazyHolder.logger.warning(String.format(format, tmpArgs));
+            LazyHolder.logger.warning("ERROR: "+((Throwable)args[lastIdx]).getMessage());
+            ((Throwable)args[lastIdx]).printStackTrace();
+        } else {
+            LazyHolder.logger.warning(String.format(format, args));
         }
     }
 
