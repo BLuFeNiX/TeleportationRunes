@@ -93,12 +93,12 @@ public class TeleportTask extends BukkitRunnable {
             int fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
             int currentExp = ExpUtil.getTotalExperience(player);
             String msg = String.format("%d XP / %d XP", fee, currentExp);
-            //player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(msg));
-            player.sendTitle("", msg);
-
             if (requireSneak && !player.isSneaking()) {
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("[sneak to confirm]"));
-            } else {
+                msg = msg.concat(" [sneak to confirm]");
+            }
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
+
+            if (!requireSneak || player.isSneaking()) {
                 // start teleport animation and timer
                 animation = Config.particleAnimation.clone()
                         .setDuration(countdownTicks);

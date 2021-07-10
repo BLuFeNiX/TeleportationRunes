@@ -2,6 +2,8 @@ package net.blufenix.teleportationrunes;
 
 import net.blufenix.common.Log;
 import net.blufenix.common.SimpleDatabase;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -169,7 +171,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 			}
 		} else if (!DebugMirage.handleMirage(player, blockLocation)) {
 			Log.d("neither teleporter nor waypoint clicked");
-			player.sendTitle("", "You must click the center of a waypoint...");
+			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You must click the center of a waypoint..."));
 		}
 	}
 
@@ -183,6 +185,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				player.sendMessage(ChatColor.RED+"Cannot re-attune scroll!");
 				return;
 			}
+			String msg;
 			if (waypoint.status == Waypoint.EXISTS_VERIFIED) {
 				Log.d("waypoint valid! trying to attune scroll");
 				ItemMeta meta = scrollStack.getItemMeta();
@@ -190,13 +193,14 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 				scrollStack.setItemMeta(meta);
 				int num = scrollStack.getAmount();
 				if (num == 1) {
-					player.sendTitle("", "1 scroll attuned...");
+					msg = "1 scroll attuned...";
 				} else {
-					player.sendTitle("", num+" scrolls attuned...");
+					msg = num+" scrolls attuned...";
 				}
 			} else {
-				player.sendTitle("", "This waypoint has not been activated...");
+				msg = "This waypoint has not been activated...";
 			}
+			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
 		} else { // use scroll
 			if (sig != null) {
 				Log.d("starting teleport task...");
@@ -211,7 +215,7 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 					}
 				}).execute();
 			} else {
-				player.sendTitle("", "Scroll not attuned...");
+				player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Scroll not attuned..."));
 			}
 		}
 
