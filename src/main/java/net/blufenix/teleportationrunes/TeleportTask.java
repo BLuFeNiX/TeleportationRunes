@@ -3,17 +3,18 @@ package net.blufenix.teleportationrunes;
 import net.blufenix.common.Log;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class TeleportTask extends BukkitRunnable {
 
-    // normally this would need to be thread safe, but minecraft only runs on one thread
-    private static Set<Player> playersCurrentlyTeleporting = new HashSet<>();
+    private static Set<Player> playersCurrentlyTeleporting = Collections.synchronizedSet(new HashSet<Player>());
 
     // modify these
     private int countdownTicks;
@@ -154,7 +155,12 @@ public class TeleportTask extends BukkitRunnable {
         if (callback != null) {
             callback.onFinished(success);
         }
-        playersCurrentlyTeleporting.remove(player);
+        Bukkit.getScheduler().runTaskLater(TeleportationRunes.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+                playersCurrentlyTeleporting.remove(player);
+            }
+        }, 20);
     }
 
     private boolean playerStillAtTeleporter() {

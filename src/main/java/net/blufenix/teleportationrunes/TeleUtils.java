@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class TeleUtils {
             if (currentExp >= fee) {
                 // teleport player
                 Location playerLoc = player.getLocation();
-                Location adjustedLoc = getSafeDestination(existingWaypoint.loc.clone());
+                final Location adjustedLoc = getSafeDestination(existingWaypoint.loc.clone());
 
                 if (adjustedLoc == null) {
                     player.sendMessage(StringResources.WAYPOINT_OBSTRUCTED);
@@ -107,7 +108,7 @@ public class TeleUtils {
 
                 // check if the player has any leashed animals to teleport as well
                 // TODO add to numEntities (can player be riding and leash the same/different entity?)
-                ArrayList<LivingEntity> leashedEntities = new ArrayList<>();
+                final ArrayList<LivingEntity> leashedEntities = new ArrayList<>();
                 for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
                     if (entity instanceof LivingEntity) {
                         LivingEntity le = (LivingEntity) entity;
@@ -146,12 +147,19 @@ public class TeleUtils {
                     }
                 }
 
-                // port leashed animals as well if there are any
-                for (LivingEntity le : leashedEntities) {
-                    le.teleport(adjustedLoc); // todo check if successful, and what to do if not?
-                    le.setLeashHolder(player);
-                    player.spawnParticle(Particle.HEART, adjustedLoc, 1);
-                }
+                // teleport leashed entities 1 tick later, to avoid behavior where leash stretches to infinity
+                new BukkitRunnable(){
+                    @Override
+                    public void run() {
+                        // port leashed animals as well if there are any
+                        for (LivingEntity le : leashedEntities) {
+                            le.teleport(adjustedLoc); // todo check if successful, and what to do if not?
+                            le.setLeashHolder(player);
+                            player.spawnParticle(Particle.HEART, adjustedLoc, 1);
+                        }
+                    }
+                }.runTaskLater(TeleportationRunes.getInstance(), 1);
+
 
                 if (Config.enableLightningEffect) {
                     player.getWorld().strikeLightningEffect(adjustedLoc);
