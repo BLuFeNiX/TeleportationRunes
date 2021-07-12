@@ -8,7 +8,7 @@ A command-less teleportation plugin for Minecraft (compatible with Bukkit, Spigo
 ## Downloads
 
 * [Latest stable build](https://github.com/BLuFeNiX/TeleportationRunes/releases/latest)
-* Latest pre-release builds can be found at the top of [this page](https://github.com/BLuFeNiX/TeleportationRunes/releases).
+* Pre-release builds can be found at the top of [this page](https://github.com/BLuFeNiX/TeleportationRunes/releases). These will have newer features and fixes, but may not be stable or fuly tested.
 
 ## Building
 ```
