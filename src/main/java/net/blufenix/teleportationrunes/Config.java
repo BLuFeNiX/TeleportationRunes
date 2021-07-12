@@ -38,6 +38,7 @@ public class Config {
     public static SwirlAnimation particleAnimation;
     public static boolean particleAnimationEnabled;
     public static int animationDutyCycle;
+    public static boolean allowTeleportBetweenWorlds;
 
     private static JavaPlugin plugin;
 
@@ -52,6 +53,7 @@ public class Config {
         enabled = config.getBoolean("TeleportationRunes.enabled");
         debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
+        allowTeleportBetweenWorlds = config.getBoolean("TeleportationRunes.allowTeleportBetweenWorlds", true);
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
         enableLightningEffect = config.getBoolean("TeleportationRunes.enableLightningEffect", false);
         enableEnderTeleportEffect = config.getBoolean("TeleportationRunes.enableEnderTeleportEffect", true);

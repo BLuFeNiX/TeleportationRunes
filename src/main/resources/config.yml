@@ -1,8 +1,26 @@
 TeleportationRunes:
   enabled: true
-  costFormula: (distance / 25)
-  enableRotation: false
   debug: false
+
+  # the XP cost for teleportation
+  # supported variables:
+  #   distance - how far apart the waypoint and teleporter are
+  #   anotherWorld - will be set to 0 if teleport occurs withing the same world, or 1 if across worlds
+  #
+  costFormula: (distance / 25)
+  # another examples...
+  #
+  # make teleportation across worlds cost an extra 100 XP
+  #   costFormula: (distance / 25) + anotherWorld * 100
+  #
+
+  # whether teleporters and waypoints can be arbitrarily rotated
+  # this will increase CPU usage and may cause lag
+  enableRotation: false
+
+  # whether or not to allow teleportation between worlds
+  # when using this feature, you may wish to use the variable called 'anotherWorld' in your cost formula
+  allowTeleportBetweenWorlds: true
 
   # whether or not to strike lightning (non-damaging) whenever a player teleports
   enableLightningEffect: false

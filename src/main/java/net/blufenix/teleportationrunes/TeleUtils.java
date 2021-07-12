@@ -83,10 +83,12 @@ public class TeleUtils {
             return false;
         }
 
-        // is the destination in our current world?
-        if (!existingWaypoint.loc.getWorld().equals(teleporterLoc.getWorld())) {
-            player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
-            return false;
+        if (!Config.allowTeleportBetweenWorlds) {
+            // is the destination in our current world?
+            if (!existingWaypoint.loc.getWorld().equals(teleporterLoc.getWorld())) {
+                player.sendMessage(StringResources.WAYPOINT_DIFFERENT_WORLD);
+                return false;
+            }
         }
 
         try {
@@ -215,14 +217,43 @@ public class TeleUtils {
     }
 
     public static int calculateExpr(Location waypointLoc, Location teleporterLoc, String formula) throws UnparsableExpressionException, UnknownFunctionException {
+        boolean anotherWorld = !waypointLoc.getWorld().equals(teleporterLoc.getWorld());
+        if (anotherWorld) {
+            // fake the world for the destination, so we can measure a somewhat nonsensical distance between them
+            waypointLoc = waypointLoc.clone();
+            waypointLoc.setWorld(teleporterLoc.getWorld());
+        }
+
         // calculate teleport distance
         double distance = waypointLoc.distance(teleporterLoc);
 
         Calculable calc = new ExpressionBuilder(formula)
                 .withVariable("distance", distance)
+                .withVariable("anotherWorld", anotherWorld ? 1 : 0)
                 .build();
 
         return (int) Math.round(calc.calculate());
     }
+
+    /*
+    public static int calculateFee(Location waypointLoc, Location teleporterLoc) throws UnparsableExpressionException, UnknownFunctionException {
+        Calculable calc;
+        if (waypointLoc.getWorld().equals(teleporterLoc.getWorld())) {
+            // calculate teleport distance
+            double distance = waypointLoc.distance(teleporterLoc);
+            calc = new ExpressionBuilder(Config.costFormula)
+                    .withVariable("distance", distance)
+                    .build();
+        } else {
+            // no such thing as distance between worlds
+            double distance = waypointLoc.distance(teleporterLoc);
+            calc = new ExpressionBuilder(Config.costFormulaBetweenWorlds)
+                    .withVariable("distance", distance)
+                    .build();
+        }
+
+        return (int) Math.round(calc.calculate());
+    }
+     */
 
 }
