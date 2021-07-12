@@ -5,6 +5,11 @@ Feel free to [buy me a coffee!](https://www.paypal.com/donate?hosted_button_id=G
 # TeleportationRunes
 A command-less teleportation plugin for Minecraft (compatible with Bukkit, Spigot, and Paper).
 
+## Downloads
+
+* [Latest stable build](https://github.com/BLuFeNiX/TeleportationRunes/releases/latest)
+* Latest pre-release builds can be found at the top of [this page](https://github.com/BLuFeNiX/TeleportationRunes/releases).
+
 ## Building
 ```
 mvn clean package
