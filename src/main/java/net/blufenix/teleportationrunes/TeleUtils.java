@@ -27,6 +27,7 @@ public class TeleUtils {
     private static Vector[] nearbyVectors = {NONE, NORTH, EAST, SOUTH, SOUTH, WEST, WEST, NORTH, NORTH};
 
     public static Teleporter getTeleporterFromLocation(Location loc) {
+        loc = loc.clone();
         int rotation;
         if ((rotation = BlockUtil.isTeleporter(loc)) >= 0) {
             return new Teleporter(loc, rotation);
