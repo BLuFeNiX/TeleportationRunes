@@ -146,8 +146,26 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 					player.sendMessage(StringResources.WAYPOINT_ALREADY_ACTIVE);
 					break;
 				case Waypoint.EXISTS_MODIFIED_CONFLICT:
-					Log.d("waypoint with this signature already exists, not registering this one");
-					player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+					// the player has modified a waypoint, so, let's remove the existing record from the DB
+					waypointDB.removeWaypointByLocation(waypoint.loc);
+					// the rest of this case is now the same as NOT_EXISTS_CONFLICT,
+					// so fall through without a break
+				case Waypoint.NOT_EXISTS_CONFLICT:
+					Waypoint conflictFromDB = waypointDB.getWaypointFromSignature(waypoint.sig);
+					Waypoint conflictInWorld = Waypoint.fromLocation(conflictFromDB.loc);
+					if (conflictInWorld.status == Waypoint.EXISTS_VERIFIED) {
+						// conflicting waypoint still exists and has not been modified
+						Log.d("waypoint with this signature already exists, not registering this one");
+						player.sendMessage(StringResources.WAYPOINT_SIGNATURE_EXISTS);
+					} else {
+						Log.d("conflicting waypoint was altered, so removing that one and registering this one");
+						waypointDB.removeWaypointBySignature(conflictFromDB.sig);
+						waypointDB.addWaypoint(waypoint);
+						player.sendMessage(StringResources.WAYPOINT_ACTIVATED);
+						if (Config.consumeBook) {
+							player.getInventory().getItemInMainHand().setAmount(0);
+						}
+					}
 					break;
 				case Waypoint.EXISTS_MODIFIED:
 					// no conflict with new signature

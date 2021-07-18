@@ -1,6 +1,9 @@
 package net.blufenix.teleportationrunes;
 
+import net.blufenix.common.Log;
 import org.bukkit.Location;
+
+import java.util.Arrays;
 
 /**
  * Created by blufenix on 7/29/15.
@@ -11,6 +14,7 @@ public class Waypoint {
     public static final int EXISTS_MODIFIED = 1;
     public static final int EXISTS_VERIFIED = 2;
     public static final int EXISTS_MODIFIED_CONFLICT = 3;
+    public static final int NOT_EXISTS_CONFLICT = 4;
 
     public final Location loc;
     public final Signature sig;
@@ -42,23 +46,31 @@ public class Waypoint {
 
         WaypointDB db = TeleportationRunes.getInstance().getWaypointDB();
 
-        Signature expectedSignature = Signature.fromLocation(loc, Config.waypointBlueprint.atRotation(rotation));
-        Waypoint waypoint = db.getWaypointFromLocation(loc);
+        Signature sigAtLoc = Signature.fromLocation(loc, Config.waypointBlueprint.atRotation(rotation));
+        Waypoint waypointFromDBLoc = db.getWaypointFromLocation(loc);
+        Waypoint ret = new Waypoint(loc, sigAtLoc);
 
-        if (waypoint != null) {
+        if (waypointFromDBLoc != null) {
             // we know the location matches, so if the signature matches as well, we are verified
-            if (waypoint.sig.equals(expectedSignature)) {
-                waypoint.status = EXISTS_VERIFIED;
-            } else if (!db.getWaypointFromSignature(waypoint.sig).loc.equals(waypoint.loc)) {
+            if (waypointFromDBLoc.sig.equals(sigAtLoc)) {
+                ret.status = EXISTS_VERIFIED;
+            } else if (db.getWaypointFromSignature(sigAtLoc) != null) {
                 // another waypoint exists in the DB with the same signature
-                waypoint.status = EXISTS_MODIFIED_CONFLICT;
+                ret.status = EXISTS_MODIFIED_CONFLICT;
             } else {
-                waypoint = new Waypoint(waypoint.loc, expectedSignature, EXISTS_MODIFIED);
+                ret.status = EXISTS_MODIFIED;
             }
         } else {
-            waypoint = new Waypoint(loc, expectedSignature, NOT_EXISTS);
+            // no waypoint has been registered at this location,
+            // but we need to see if the desired signature is available
+            if (db.getWaypointFromSignature(sigAtLoc) == null) {
+                // signature not used
+                ret.status = NOT_EXISTS;
+            } else {
+                ret.status = NOT_EXISTS_CONFLICT;
+            }
         }
 
-        return waypoint;
+        return ret;
     }
 }
