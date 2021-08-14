@@ -1,6 +1,6 @@
 name: TeleportationRunes
 main: net.blufenix.teleportationrunes.TeleportationRunes
-version: 2.1.0-beta
+version: 2.1.0
 api-version: 1.16
 commands:
    tr:
