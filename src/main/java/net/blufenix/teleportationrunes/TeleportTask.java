@@ -4,6 +4,7 @@ import net.blufenix.common.Log;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -90,7 +91,12 @@ public class TeleportTask extends BukkitRunnable {
             countdownTicks = TeleUtils.calculateExpr(sourceLoc, destWaypoint.loc, Config.teleportDelayFormula);
 
             // show the player the cost
-            int fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
+            int fee;
+            if (player.getGameMode() == GameMode.CREATIVE) {
+                fee = 0;
+            } else {
+                fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
+            }
             int currentExp = ExpUtil.getTotalExperience(player);
             String msg = String.format("%d XP / %d XP", fee, currentExp);
             if (requireSneak && !player.isSneaking()) {
