@@ -14,6 +14,9 @@ TeleportationRunes:
   #   costFormula: (distance / 25) + anotherWorld * 100
   #
 
+  # whether teleporting costs XP for players in creative mode
+  costXpInCreative: false
+
   # whether teleporters and waypoints can be arbitrarily rotated
   # this will increase CPU usage and may cause lag
   enableRotation: false

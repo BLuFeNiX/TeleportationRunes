@@ -22,6 +22,7 @@ public class Config {
     public static boolean enabled;
     public static boolean debug;
     public static String costFormula;
+    public static boolean costXpInCreative;
     public static boolean enableRotation;
     public static SimpleDatabase.Backend databaseBackend;
 
@@ -53,6 +54,7 @@ public class Config {
         enabled = config.getBoolean("TeleportationRunes.enabled");
         debug = config.getBoolean("TeleportationRunes.debug");
         costFormula = config.getString("TeleportationRunes.costFormula");
+        costXpInCreative = config.getBoolean("TeleportationRunes.costXpInCreative", false);
         allowTeleportBetweenWorlds = config.getBoolean("TeleportationRunes.allowTeleportBetweenWorlds", true);
         enableRotation = config.getBoolean("TeleportationRunes.enableRotation");
         enableLightningEffect = config.getBoolean("TeleportationRunes.enableLightningEffect", false);

@@ -92,7 +92,7 @@ public class TeleportTask extends BukkitRunnable {
 
             // show the player the cost
             int fee;
-            if (player.getGameMode() == GameMode.CREATIVE) {
+            if (!Config.costXpInCreative && player.getGameMode() == GameMode.CREATIVE) {
                 fee = 0;
             } else {
                 fee = TeleUtils.calculateExpr(destWaypoint.loc, sourceLoc, Config.costFormula);
