@@ -222,12 +222,10 @@ public class TeleportationRunes extends JavaPlugin implements Listener {
 		} else { // use scroll
 			if (sig != null) {
 				Log.d("starting teleport task...");
-				new TeleportTask(player, sig, true, new TeleportTask.Callback() {
+				new TeleportTask(player, sig, scrollStack, true, new TeleportTask.Callback() {
 					@Override
 					void onFinished(boolean success) {
 						if (success) {
-							// TODO prevent player from throwing scrolls on the ground
-							// ex: remove from inventory before teleport, and add back if failure
 							scrollStack.setAmount(scrollStack.getAmount() - 1);
 						}
 					}
