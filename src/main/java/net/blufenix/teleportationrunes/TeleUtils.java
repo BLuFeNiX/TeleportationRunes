@@ -95,7 +95,7 @@ public class TeleUtils {
         try {
 
             int fee;
-            if (player.getGameMode() == GameMode.CREATIVE) {
+            if (!Config.costXpInCreative && player.getGameMode() == GameMode.CREATIVE) {
                 fee = 0;
             } else {
                 fee = calculateExpr(existingWaypoint.loc, teleporterLoc, Config.costFormula);
