@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collections;
@@ -28,6 +29,7 @@ public class TeleportTask extends BukkitRunnable {
     private final Player player;
     private final boolean canLeaveArea;
     private final boolean requireSneak;
+    private final ItemStack requiredItem;
     private Location sourceLoc;
     private Waypoint destWaypoint;
     private Location potentialTeleporterLoc;
@@ -42,14 +44,16 @@ public class TeleportTask extends BukkitRunnable {
         this.potentialTeleporterLoc = potentialTeleporterLoc;
         canLeaveArea = false;
         requireSneak = false;
+        requiredItem = null;
     }
 
-    TeleportTask(Player player, Signature waypointSignature, boolean requireSneak, Callback callback) {
+    TeleportTask(Player player, Signature waypointSignature, ItemStack requiredItem, boolean requireSneak, Callback callback) {
         this.player = player;
         this.callback = callback;
         this.waypointSignature = waypointSignature;
         this.canLeaveArea = true;
         this.requireSneak = requireSneak;
+        this.requiredItem = requiredItem;
     }
 
     private void lateInit() {
@@ -142,6 +146,12 @@ public class TeleportTask extends BukkitRunnable {
             return;
         }
 
+        if (requiredItem != null && !requiredItemInHand()) {
+            player.sendMessage("You're no longer holding the scroll. Cancelling...");
+            onSuccessOrFail(false);
+            return;
+        }
+
         if (elapsedTicks < countdownTicks) {
             if (Config.particleAnimationEnabled) {
                 animation.update(elapsedTicks);
@@ -171,6 +181,10 @@ public class TeleportTask extends BukkitRunnable {
 
     private boolean playerStillAtTeleporter() {
         return player.getLocation().distance(sourceLoc) < 2.5;
+    }
+
+    private boolean requiredItemInHand() {
+        return player.getInventory().getItemInMainHand().equals(requiredItem) || player.getInventory().getItemInOffHand().equals(requiredItem);
     }
 
     public static abstract class Callback {
