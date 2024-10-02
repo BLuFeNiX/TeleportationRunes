@@ -76,10 +76,10 @@ public class BlockUtil {
                     @Override
                     void onInteract(Player p, Location loc, Blueprint.Block bblock) {
                         if (bblock.getMaterial() != null) {
-                            p.sendBlockChange(loc, bblock.getMaterial(), (byte) 0);
+                            p.sendBlockChange(loc, bblock.getMaterial().createBlockData());
                         } else {
                             if (bblock.getMaterialName().startsWith("SIGNATURE_BLOCK")) {
-                                p.sendBlockChange(loc, Material.BEACON, (byte) 0);
+                                p.sendBlockChange(loc, Material.BEACON.createBlockData());
                             }
                         }
                     }
@@ -115,9 +115,9 @@ public class BlockUtil {
         Material mat2 = loc.clone().add(Vectors.UP).add(Vectors.UP).getBlock().getType();
         Material mat3 = loc.clone().add(Vectors.UP).add(Vectors.UP).add(Vectors.UP).getBlock().getType();
 
-        return (mat1 == Material.AIR || mat1 == Material.WATER || mat1.isTransparent() || mat1.name().contains("SLAB") || mat1.name().contains("STEP"))
-                && (mat2 == Material.AIR || mat2 == Material.WATER || mat2.isTransparent())
-                && (mat3 == Material.AIR || mat3 == Material.WATER || mat3.isTransparent());
+        return (mat1 == Material.AIR || mat1 == Material.WATER || !mat1.isOccluding() || mat1.name().contains("SLAB") || mat1.name().contains("STEP"))
+                && (mat2 == Material.AIR || mat2 == Material.WATER || !mat2.isOccluding())
+                && (mat3 == Material.AIR || mat3 == Material.WATER || !mat3.isOccluding());
     }
 
     private static abstract class BlockInteractor {
